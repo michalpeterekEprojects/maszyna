@@ -18,6 +18,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include "Camera.h"
 #include "Classes.h"
+#include "ETH_IO/ethio.h"
 
 class driver_mode : public application_mode {
 
@@ -79,7 +80,7 @@ private:
 #endif
         std::unique_ptr<uart_input> uart;
         std::unique_ptr<motiontelemetry> telemetry;
-
+		std::unique_ptr<ethio> EthernetIO;
         bool init();
         void poll();
     };

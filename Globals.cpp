@@ -681,6 +681,14 @@ global_settings::ConfigParse(cParser &Parser) {
             Parser.getTokens( 1 );
             Parser >> uart_conf.debug;
         }
+		else if ( token == "ethio" )
+		{
+			ethio_conf.enable = true;
+			Parser.getTokens(2, false);
+			Parser 
+				>> ethio_conf.ControllerIP 
+				>> ethio_conf.ControllerPort;
+		}
 		else if (token == "loadinglog") {
             Parser.getTokens( 1 );
             Parser >> loading_log;

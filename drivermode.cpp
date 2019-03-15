@@ -71,8 +71,20 @@ driver_mode::drivermode_input::init() {
         uart = std::make_unique<uart_input>();
         uart->init();
     }
-    if (Global.motiontelemetry_conf.enable)
+    if (Global.motiontelemetry_conf.enable){
         telemetry = std::make_unique<motiontelemetry>();
+	}
+	if (Global.ethio_conf.enable){
+		WriteLog("ETH : Config is ON!");
+		EthernetIO = std::make_unique<ethio>();
+		if (EthernetIO != nullptr)
+		{
+			if (EthernetIO->Connect())
+			{
+				EthernetIO->StartReceive();
+			}
+		}
+	}
 
 #ifdef _WIN32
     Console::On(); // włączenie konsoli

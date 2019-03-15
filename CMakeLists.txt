@@ -148,6 +148,8 @@ set(SOURCES
 "imgui/imgui_draw.cpp"
 "imgui/imgui_widgets.cpp"
 "imgui/imgui_impl_glfw.cpp"
+
+"ETH_IO/ethio.cpp"
 )
 
 option(USE_IMGUI_GL3 "Use OpenGL3+ imgui implementation" ON)
