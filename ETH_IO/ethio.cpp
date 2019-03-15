@@ -352,6 +352,14 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::reverserbackward, 0, 0, GLFW_PRESS, 0);
 	}
+	else if (CMD == "pantographtogglefront_push")
+	{
+		relay.post(user_command::pantographtogglefront, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "pantographtogglefront_release")
+	{
+		relay.post(user_command::pantographtogglefront, 0, 0, GLFW_RELEASE, 0);
+	}
 	else
 	{
 		WriteLog("ETH : Unknown command - " + CMD);

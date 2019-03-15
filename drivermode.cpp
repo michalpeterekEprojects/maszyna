@@ -79,10 +79,21 @@ driver_mode::drivermode_input::init() {
 		EthernetIO = std::make_unique<ethio>();
 		if (EthernetIO != nullptr)
 		{
-			if (EthernetIO->Connect())
+			int iResult = 0;
+			do
 			{
-				EthernetIO->StartReceive();
+				if (iResult = EthernetIO->Connect())
+				{
+					EthernetIO->StartReceive();
+				}
+				else
+				{
+					WriteLog("ETH : Connect to module failed. Retry in 2sec..");
+					Sleep(2000);
+				}
 			}
+			while (!iResult);
+				
 		}
 	}
 
