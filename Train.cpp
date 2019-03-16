@@ -161,199 +161,200 @@ void TCab::Update(bool const Power)
 // TBD, TODO: consider this approach if we ever want to have customized consist behaviour to received commands, based on the consist/vehicle type or whatever
 TTrain::commandhandler_map const TTrain::m_commandhandlers = {
 
-    {user_command::aidriverenable, &TTrain::OnCommand_aidriverenable},
-    {user_command::aidriverdisable, &TTrain::OnCommand_aidriverdisable},
-    {user_command::jointcontrollerset, &TTrain::OnCommand_jointcontrollerset},
-    {user_command::mastercontrollerincrease, &TTrain::OnCommand_mastercontrollerincrease},
-    {user_command::mastercontrollerincreasefast, &TTrain::OnCommand_mastercontrollerincreasefast},
-    {user_command::mastercontrollerdecrease, &TTrain::OnCommand_mastercontrollerdecrease},
-    {user_command::mastercontrollerdecreasefast, &TTrain::OnCommand_mastercontrollerdecreasefast},
-    {user_command::mastercontrollerset, &TTrain::OnCommand_mastercontrollerset},
-    {user_command::secondcontrollerincrease, &TTrain::OnCommand_secondcontrollerincrease},
-    {user_command::secondcontrollerincreasefast, &TTrain::OnCommand_secondcontrollerincreasefast},
-    {user_command::secondcontrollerdecrease, &TTrain::OnCommand_secondcontrollerdecrease},
-    {user_command::secondcontrollerdecreasefast, &TTrain::OnCommand_secondcontrollerdecreasefast},
-    {user_command::secondcontrollerset, &TTrain::OnCommand_secondcontrollerset},
-    {user_command::notchingrelaytoggle, &TTrain::OnCommand_notchingrelaytoggle},
-    {user_command::tempomattoggle, &TTrain::OnCommand_tempomattoggle},
-    {user_command::mucurrentindicatorothersourceactivate, &TTrain::OnCommand_mucurrentindicatorothersourceactivate},
-    {user_command::independentbrakeincrease, &TTrain::OnCommand_independentbrakeincrease},
-    {user_command::independentbrakeincreasefast, &TTrain::OnCommand_independentbrakeincreasefast},
-    {user_command::independentbrakedecrease, &TTrain::OnCommand_independentbrakedecrease},
-    {user_command::independentbrakedecreasefast, &TTrain::OnCommand_independentbrakedecreasefast},
-    {user_command::independentbrakeset, &TTrain::OnCommand_independentbrakeset},
-    {user_command::independentbrakebailoff, &TTrain::OnCommand_independentbrakebailoff},
-    {user_command::trainbrakeincrease, &TTrain::OnCommand_trainbrakeincrease},
-    {user_command::trainbrakedecrease, &TTrain::OnCommand_trainbrakedecrease},
-    {user_command::trainbrakeset, &TTrain::OnCommand_trainbrakeset},
-    {user_command::trainbrakecharging, &TTrain::OnCommand_trainbrakecharging},
-    {user_command::trainbrakerelease, &TTrain::OnCommand_trainbrakerelease},
-    {user_command::trainbrakefirstservice, &TTrain::OnCommand_trainbrakefirstservice},
-    {user_command::trainbrakeservice, &TTrain::OnCommand_trainbrakeservice},
-    {user_command::trainbrakefullservice, &TTrain::OnCommand_trainbrakefullservice},
-    {user_command::trainbrakehandleoff, &TTrain::OnCommand_trainbrakehandleoff},
-    {user_command::trainbrakeemergency, &TTrain::OnCommand_trainbrakeemergency},
-    {user_command::trainbrakebasepressureincrease, &TTrain::OnCommand_trainbrakebasepressureincrease},
-    {user_command::trainbrakebasepressuredecrease, &TTrain::OnCommand_trainbrakebasepressuredecrease},
-    {user_command::trainbrakebasepressurereset, &TTrain::OnCommand_trainbrakebasepressurereset},
-    {user_command::trainbrakeoperationtoggle, &TTrain::OnCommand_trainbrakeoperationtoggle},
-    {user_command::manualbrakeincrease, &TTrain::OnCommand_manualbrakeincrease},
-    {user_command::manualbrakedecrease, &TTrain::OnCommand_manualbrakedecrease},
-    {user_command::alarmchaintoggle, &TTrain::OnCommand_alarmchaintoggle},
-    {user_command::wheelspinbrakeactivate, &TTrain::OnCommand_wheelspinbrakeactivate},
-    {user_command::sandboxactivate, &TTrain::OnCommand_sandboxactivate},
-    {user_command::epbrakecontroltoggle, &TTrain::OnCommand_epbrakecontroltoggle},
-    {user_command::trainbrakeoperationmodeincrease, &TTrain::OnCommand_trainbrakeoperationmodeincrease},
-    {user_command::trainbrakeoperationmodedecrease, &TTrain::OnCommand_trainbrakeoperationmodedecrease},
-    {user_command::brakeactingspeedincrease, &TTrain::OnCommand_brakeactingspeedincrease},
-    {user_command::brakeactingspeeddecrease, &TTrain::OnCommand_brakeactingspeeddecrease},
-    {user_command::brakeactingspeedsetcargo, &TTrain::OnCommand_brakeactingspeedsetcargo},
-    {user_command::brakeactingspeedsetpassenger, &TTrain::OnCommand_brakeactingspeedsetpassenger},
-    {user_command::brakeactingspeedsetrapid, &TTrain::OnCommand_brakeactingspeedsetrapid},
-    {user_command::brakeloadcompensationincrease, &TTrain::OnCommand_brakeloadcompensationincrease},
-    {user_command::brakeloadcompensationdecrease, &TTrain::OnCommand_brakeloadcompensationdecrease},
-    {user_command::mubrakingindicatortoggle, &TTrain::OnCommand_mubrakingindicatortoggle},
-    {user_command::reverserincrease, &TTrain::OnCommand_reverserincrease},
-    {user_command::reverserdecrease, &TTrain::OnCommand_reverserdecrease},
-    {user_command::reverserforwardhigh, &TTrain::OnCommand_reverserforwardhigh},
-    {user_command::reverserforward, &TTrain::OnCommand_reverserforward},
-    {user_command::reverserneutral, &TTrain::OnCommand_reverserneutral},
-    {user_command::reverserbackward, &TTrain::OnCommand_reverserbackward},
-    {user_command::alerteracknowledge, &TTrain::OnCommand_alerteracknowledge},
-    {user_command::batterytoggle, &TTrain::OnCommand_batterytoggle},
-    {user_command::batteryenable, &TTrain::OnCommand_batteryenable},
-    {user_command::batterydisable, &TTrain::OnCommand_batterydisable},
-    {user_command::pantographcompressorvalvetoggle, &TTrain::OnCommand_pantographcompressorvalvetoggle},
-    {user_command::pantographcompressoractivate, &TTrain::OnCommand_pantographcompressoractivate},
-    {user_command::pantographtogglefront, &TTrain::OnCommand_pantographtogglefront},
-    {user_command::pantographtogglerear, &TTrain::OnCommand_pantographtogglerear},
-    {user_command::pantographraisefront, &TTrain::OnCommand_pantographraisefront},
-    {user_command::pantographraiserear, &TTrain::OnCommand_pantographraiserear},
-    {user_command::pantographlowerfront, &TTrain::OnCommand_pantographlowerfront},
-    {user_command::pantographlowerrear, &TTrain::OnCommand_pantographlowerrear},
-    {user_command::pantographlowerall, &TTrain::OnCommand_pantographlowerall},
-    {user_command::linebreakertoggle, &TTrain::OnCommand_linebreakertoggle},
-    {user_command::linebreakeropen, &TTrain::OnCommand_linebreakeropen},
-    {user_command::linebreakerclose, &TTrain::OnCommand_linebreakerclose},
-    {user_command::fuelpumptoggle, &TTrain::OnCommand_fuelpumptoggle},
-    {user_command::fuelpumpenable, &TTrain::OnCommand_fuelpumpenable},
-    {user_command::fuelpumpdisable, &TTrain::OnCommand_fuelpumpdisable},
-    {user_command::oilpumptoggle, &TTrain::OnCommand_oilpumptoggle},
-    {user_command::oilpumpenable, &TTrain::OnCommand_oilpumpenable},
-    {user_command::oilpumpdisable, &TTrain::OnCommand_oilpumpdisable},
-    {user_command::waterheaterbreakertoggle, &TTrain::OnCommand_waterheaterbreakertoggle},
-    {user_command::waterheaterbreakerclose, &TTrain::OnCommand_waterheaterbreakerclose},
-    {user_command::waterheaterbreakeropen, &TTrain::OnCommand_waterheaterbreakeropen},
-    {user_command::waterheatertoggle, &TTrain::OnCommand_waterheatertoggle},
-    {user_command::waterheaterenable, &TTrain::OnCommand_waterheaterenable},
-    {user_command::waterheaterdisable, &TTrain::OnCommand_waterheaterdisable},
-    {user_command::waterpumpbreakertoggle, &TTrain::OnCommand_waterpumpbreakertoggle},
-    {user_command::waterpumpbreakerclose, &TTrain::OnCommand_waterpumpbreakerclose},
-    {user_command::waterpumpbreakeropen, &TTrain::OnCommand_waterpumpbreakeropen},
-    {user_command::waterpumptoggle, &TTrain::OnCommand_waterpumptoggle},
-    {user_command::waterpumpenable, &TTrain::OnCommand_waterpumpenable},
-    {user_command::waterpumpdisable, &TTrain::OnCommand_waterpumpdisable},
-    {user_command::watercircuitslinktoggle, &TTrain::OnCommand_watercircuitslinktoggle},
-    {user_command::watercircuitslinkenable, &TTrain::OnCommand_watercircuitslinkenable},
-    {user_command::watercircuitslinkdisable, &TTrain::OnCommand_watercircuitslinkdisable},
-    {user_command::convertertoggle, &TTrain::OnCommand_convertertoggle},
-    {user_command::converterenable, &TTrain::OnCommand_converterenable},
-    {user_command::converterdisable, &TTrain::OnCommand_converterdisable},
-    {user_command::convertertogglelocal, &TTrain::OnCommand_convertertogglelocal},
-    {user_command::converteroverloadrelayreset, &TTrain::OnCommand_converteroverloadrelayreset},
-    {user_command::compressortoggle, &TTrain::OnCommand_compressortoggle},
-    {user_command::compressorenable, &TTrain::OnCommand_compressorenable},
-    {user_command::compressordisable, &TTrain::OnCommand_compressordisable},
-    {user_command::compressortogglelocal, &TTrain::OnCommand_compressortogglelocal},
-    {user_command::motorblowerstogglefront, &TTrain::OnCommand_motorblowerstogglefront},
-    {user_command::motorblowerstogglerear, &TTrain::OnCommand_motorblowerstogglerear},
-    {user_command::motorblowersdisableall, &TTrain::OnCommand_motorblowersdisableall},
-    {user_command::coolingfanstoggle, &TTrain::OnCommand_coolingfanstoggle},
-    {user_command::motorconnectorsopen, &TTrain::OnCommand_motorconnectorsopen},
-    {user_command::motorconnectorsclose, &TTrain::OnCommand_motorconnectorsclose},
-    {user_command::motordisconnect, &TTrain::OnCommand_motordisconnect},
-    {user_command::motoroverloadrelaythresholdtoggle, &TTrain::OnCommand_motoroverloadrelaythresholdtoggle},
-    {user_command::motoroverloadrelaythresholdsetlow, &TTrain::OnCommand_motoroverloadrelaythresholdsetlow},
-    {user_command::motoroverloadrelaythresholdsethigh, &TTrain::OnCommand_motoroverloadrelaythresholdsethigh},
-    {user_command::motoroverloadrelayreset, &TTrain::OnCommand_motoroverloadrelayreset},
-    {user_command::heatingtoggle, &TTrain::OnCommand_heatingtoggle},
-    {user_command::heatingenable, &TTrain::OnCommand_heatingenable},
-    {user_command::heatingdisable, &TTrain::OnCommand_heatingdisable},
-    {user_command::lightspresetactivatenext, &TTrain::OnCommand_lightspresetactivatenext},
-    {user_command::lightspresetactivateprevious, &TTrain::OnCommand_lightspresetactivateprevious},
-    {user_command::headlighttoggleleft, &TTrain::OnCommand_headlighttoggleleft},
-    {user_command::headlightenableleft, &TTrain::OnCommand_headlightenableleft},
-    {user_command::headlightdisableleft, &TTrain::OnCommand_headlightdisableleft},
-    {user_command::headlighttoggleright, &TTrain::OnCommand_headlighttoggleright},
-    {user_command::headlightenableright, &TTrain::OnCommand_headlightenableright},
-    {user_command::headlightdisableright, &TTrain::OnCommand_headlightdisableright},
-    {user_command::headlighttoggleupper, &TTrain::OnCommand_headlighttoggleupper},
-    {user_command::headlightenableupper, &TTrain::OnCommand_headlightenableupper},
-    {user_command::headlightdisableupper, &TTrain::OnCommand_headlightdisableupper},
-    {user_command::redmarkertoggleleft, &TTrain::OnCommand_redmarkertoggleleft},
-    {user_command::redmarkerenableleft, &TTrain::OnCommand_redmarkerenableleft},
-    {user_command::redmarkerdisableleft, &TTrain::OnCommand_redmarkerdisableleft},
-    {user_command::redmarkertoggleright, &TTrain::OnCommand_redmarkertoggleright},
-    {user_command::redmarkerenableright, &TTrain::OnCommand_redmarkerenableright},
-    {user_command::redmarkerdisableright, &TTrain::OnCommand_redmarkerdisableright},
-    {user_command::headlighttogglerearleft, &TTrain::OnCommand_headlighttogglerearleft},
-    {user_command::headlighttogglerearright, &TTrain::OnCommand_headlighttogglerearright},
-    {user_command::headlighttogglerearupper, &TTrain::OnCommand_headlighttogglerearupper},
-    {user_command::redmarkertogglerearleft, &TTrain::OnCommand_redmarkertogglerearleft},
-    {user_command::redmarkertogglerearright, &TTrain::OnCommand_redmarkertogglerearright},
-    {user_command::redmarkerstoggle, &TTrain::OnCommand_redmarkerstoggle},
-    {user_command::endsignalstoggle, &TTrain::OnCommand_endsignalstoggle},
-    {user_command::headlightsdimtoggle, &TTrain::OnCommand_headlightsdimtoggle},
-    {user_command::headlightsdimenable, &TTrain::OnCommand_headlightsdimenable},
-    {user_command::headlightsdimdisable, &TTrain::OnCommand_headlightsdimdisable},
-    {user_command::interiorlighttoggle, &TTrain::OnCommand_interiorlighttoggle},
-    {user_command::interiorlightenable, &TTrain::OnCommand_interiorlightenable},
-    {user_command::interiorlightdimdisable, &TTrain::OnCommand_interiorlightdisable},
-    {user_command::interiorlightdimtoggle, &TTrain::OnCommand_interiorlightdimtoggle},
-    {user_command::interiorlightdimenable, &TTrain::OnCommand_interiorlightdimenable},
-    {user_command::interiorlightdimdisable, &TTrain::OnCommand_interiorlightdimdisable},
-    {user_command::instrumentlighttoggle, &TTrain::OnCommand_instrumentlighttoggle},
-    {user_command::instrumentlightenable, &TTrain::OnCommand_instrumentlightenable},
-    {user_command::instrumentlightdisable, &TTrain::OnCommand_instrumentlightdisable},
-    {user_command::dashboardlighttoggle, &TTrain::OnCommand_dashboardlighttoggle},
-    {user_command::timetablelighttoggle, &TTrain::OnCommand_timetablelighttoggle},
-    {user_command::doorlocktoggle, &TTrain::OnCommand_doorlocktoggle},
-    {user_command::doortoggleleft, &TTrain::OnCommand_doortoggleleft},
-    {user_command::doortoggleright, &TTrain::OnCommand_doortoggleright},
-    {user_command::doorpermitleft, &TTrain::OnCommand_doorpermitleft},
-    {user_command::doorpermitright, &TTrain::OnCommand_doorpermitright},
-    {user_command::doorpermitpresetactivatenext, &TTrain::OnCommand_doorpermitpresetactivatenext},
-    {user_command::doorpermitpresetactivateprevious, &TTrain::OnCommand_doorpermitpresetactivateprevious},
-    {user_command::dooropenleft, &TTrain::OnCommand_dooropenleft},
-    {user_command::dooropenright, &TTrain::OnCommand_dooropenright},
-    {user_command::doorcloseleft, &TTrain::OnCommand_doorcloseleft},
-    {user_command::doorcloseright, &TTrain::OnCommand_doorcloseright},
-    {user_command::dooropenall, &TTrain::OnCommand_dooropenall},
-    {user_command::doorcloseall, &TTrain::OnCommand_doorcloseall},
-    {user_command::doorsteptoggle, &TTrain::OnCommand_doorsteptoggle},
-    {user_command::carcouplingincrease, &TTrain::OnCommand_carcouplingincrease},
-    {user_command::carcouplingdisconnect, &TTrain::OnCommand_carcouplingdisconnect},
-    {user_command::departureannounce, &TTrain::OnCommand_departureannounce},
-    {user_command::hornlowactivate, &TTrain::OnCommand_hornlowactivate},
-    {user_command::hornhighactivate, &TTrain::OnCommand_hornhighactivate},
-    {user_command::whistleactivate, &TTrain::OnCommand_whistleactivate},
-    {user_command::radiotoggle, &TTrain::OnCommand_radiotoggle},
-    {user_command::radiochannelincrease, &TTrain::OnCommand_radiochannelincrease},
-    {user_command::radiochanneldecrease, &TTrain::OnCommand_radiochanneldecrease},
-    {user_command::radiostopsend, &TTrain::OnCommand_radiostopsend},
-    {user_command::radiostoptest, &TTrain::OnCommand_radiostoptest},
-    {user_command::cabchangeforward, &TTrain::OnCommand_cabchangeforward},
-    {user_command::cabchangebackward, &TTrain::OnCommand_cabchangebackward},
-    {user_command::generictoggle0, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle1, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle2, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle3, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle4, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle5, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle6, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle7, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle8, &TTrain::OnCommand_generictoggle},
-    {user_command::generictoggle9, &TTrain::OnCommand_generictoggle},
+    { user_command::aidriverenable, &TTrain::OnCommand_aidriverenable },
+    { user_command::aidriverdisable, &TTrain::OnCommand_aidriverdisable },
+    { user_command::jointcontrollerset, &TTrain::OnCommand_jointcontrollerset },
+    { user_command::mastercontrollerincrease, &TTrain::OnCommand_mastercontrollerincrease },
+    { user_command::mastercontrollerincreasefast, &TTrain::OnCommand_mastercontrollerincreasefast },
+    { user_command::mastercontrollerdecrease, &TTrain::OnCommand_mastercontrollerdecrease },
+    { user_command::mastercontrollerdecreasefast, &TTrain::OnCommand_mastercontrollerdecreasefast },
+    { user_command::mastercontrollerset, &TTrain::OnCommand_mastercontrollerset },
+    { user_command::secondcontrollerincrease, &TTrain::OnCommand_secondcontrollerincrease },
+    { user_command::secondcontrollerincreasefast, &TTrain::OnCommand_secondcontrollerincreasefast },
+    { user_command::secondcontrollerdecrease, &TTrain::OnCommand_secondcontrollerdecrease },
+    { user_command::secondcontrollerdecreasefast, &TTrain::OnCommand_secondcontrollerdecreasefast },
+    { user_command::secondcontrollerset, &TTrain::OnCommand_secondcontrollerset },
+    { user_command::notchingrelaytoggle, &TTrain::OnCommand_notchingrelaytoggle },
+    { user_command::tempomattoggle, &TTrain::OnCommand_tempomattoggle },
+    { user_command::mucurrentindicatorothersourceactivate, &TTrain::OnCommand_mucurrentindicatorothersourceactivate },
+    { user_command::independentbrakeincrease, &TTrain::OnCommand_independentbrakeincrease },
+    { user_command::independentbrakeincreasefast, &TTrain::OnCommand_independentbrakeincreasefast },
+    { user_command::independentbrakedecrease, &TTrain::OnCommand_independentbrakedecrease },
+    { user_command::independentbrakedecreasefast, &TTrain::OnCommand_independentbrakedecreasefast },
+    { user_command::independentbrakeset, &TTrain::OnCommand_independentbrakeset },
+    { user_command::independentbrakebailoff, &TTrain::OnCommand_independentbrakebailoff },
+    { user_command::trainbrakeincrease, &TTrain::OnCommand_trainbrakeincrease },
+    { user_command::trainbrakedecrease, &TTrain::OnCommand_trainbrakedecrease },
+    { user_command::trainbrakeset, &TTrain::OnCommand_trainbrakeset },
+    { user_command::trainbrakecharging, &TTrain::OnCommand_trainbrakecharging },
+    { user_command::trainbrakerelease, &TTrain::OnCommand_trainbrakerelease },
+    { user_command::trainbrakefirstservice, &TTrain::OnCommand_trainbrakefirstservice },
+    { user_command::trainbrakeservice, &TTrain::OnCommand_trainbrakeservice },
+    { user_command::trainbrakefullservice, &TTrain::OnCommand_trainbrakefullservice },
+    { user_command::trainbrakehandleoff, &TTrain::OnCommand_trainbrakehandleoff },
+    { user_command::trainbrakeemergency, &TTrain::OnCommand_trainbrakeemergency },
+    { user_command::trainbrakebasepressureincrease, &TTrain::OnCommand_trainbrakebasepressureincrease },
+    { user_command::trainbrakebasepressuredecrease, &TTrain::OnCommand_trainbrakebasepressuredecrease },
+    { user_command::trainbrakebasepressurereset, &TTrain::OnCommand_trainbrakebasepressurereset },
+    { user_command::trainbrakeoperationtoggle, &TTrain::OnCommand_trainbrakeoperationtoggle },
+    { user_command::manualbrakeincrease, &TTrain::OnCommand_manualbrakeincrease },
+    { user_command::manualbrakedecrease, &TTrain::OnCommand_manualbrakedecrease },
+    { user_command::alarmchaintoggle, &TTrain::OnCommand_alarmchaintoggle },
+    { user_command::wheelspinbrakeactivate, &TTrain::OnCommand_wheelspinbrakeactivate },
+    { user_command::sandboxactivate, &TTrain::OnCommand_sandboxactivate },
+    { user_command::epbrakecontroltoggle, &TTrain::OnCommand_epbrakecontroltoggle },
+	{ user_command::trainbrakeoperationmodeincrease, &TTrain::OnCommand_trainbrakeoperationmodeincrease },
+	{ user_command::trainbrakeoperationmodedecrease, &TTrain::OnCommand_trainbrakeoperationmodedecrease },
+    { user_command::brakeactingspeedincrease, &TTrain::OnCommand_brakeactingspeedincrease },
+    { user_command::brakeactingspeeddecrease, &TTrain::OnCommand_brakeactingspeeddecrease },
+    { user_command::brakeactingspeedsetcargo, &TTrain::OnCommand_brakeactingspeedsetcargo },
+    { user_command::brakeactingspeedsetpassenger, &TTrain::OnCommand_brakeactingspeedsetpassenger },
+    { user_command::brakeactingspeedsetrapid, &TTrain::OnCommand_brakeactingspeedsetrapid },
+    { user_command::brakeloadcompensationincrease, &TTrain::OnCommand_brakeloadcompensationincrease },
+    { user_command::brakeloadcompensationdecrease, &TTrain::OnCommand_brakeloadcompensationdecrease },
+    { user_command::mubrakingindicatortoggle, &TTrain::OnCommand_mubrakingindicatortoggle },
+    { user_command::reverserincrease, &TTrain::OnCommand_reverserincrease },
+    { user_command::reverserdecrease, &TTrain::OnCommand_reverserdecrease },
+    { user_command::reverserforwardhigh, &TTrain::OnCommand_reverserforwardhigh },
+    { user_command::reverserforward, &TTrain::OnCommand_reverserforward },
+    { user_command::reverserneutral, &TTrain::OnCommand_reverserneutral },
+    { user_command::reverserbackward, &TTrain::OnCommand_reverserbackward },
+    { user_command::alerteracknowledge, &TTrain::OnCommand_alerteracknowledge },
+    { user_command::cabsignalacknowledge, &TTrain::OnCommand_cabsignalacknowledge },
+    { user_command::batterytoggle, &TTrain::OnCommand_batterytoggle },
+    { user_command::batteryenable, &TTrain::OnCommand_batteryenable },
+    { user_command::batterydisable, &TTrain::OnCommand_batterydisable },
+    { user_command::pantographcompressorvalvetoggle, &TTrain::OnCommand_pantographcompressorvalvetoggle },
+    { user_command::pantographcompressoractivate, &TTrain::OnCommand_pantographcompressoractivate },
+    { user_command::pantographtogglefront, &TTrain::OnCommand_pantographtogglefront },
+    { user_command::pantographtogglerear, &TTrain::OnCommand_pantographtogglerear },
+    { user_command::pantographraisefront, &TTrain::OnCommand_pantographraisefront },
+    { user_command::pantographraiserear, &TTrain::OnCommand_pantographraiserear },
+    { user_command::pantographlowerfront, &TTrain::OnCommand_pantographlowerfront },
+    { user_command::pantographlowerrear, &TTrain::OnCommand_pantographlowerrear },
+    { user_command::pantographlowerall, &TTrain::OnCommand_pantographlowerall },
+    { user_command::linebreakertoggle, &TTrain::OnCommand_linebreakertoggle },
+    { user_command::linebreakeropen, &TTrain::OnCommand_linebreakeropen },
+    { user_command::linebreakerclose, &TTrain::OnCommand_linebreakerclose },
+    { user_command::fuelpumptoggle, &TTrain::OnCommand_fuelpumptoggle },
+    { user_command::fuelpumpenable, &TTrain::OnCommand_fuelpumpenable },
+    { user_command::fuelpumpdisable, &TTrain::OnCommand_fuelpumpdisable },
+    { user_command::oilpumptoggle, &TTrain::OnCommand_oilpumptoggle },
+    { user_command::oilpumpenable, &TTrain::OnCommand_oilpumpenable },
+    { user_command::oilpumpdisable, &TTrain::OnCommand_oilpumpdisable },
+    { user_command::waterheaterbreakertoggle, &TTrain::OnCommand_waterheaterbreakertoggle },
+    { user_command::waterheaterbreakerclose, &TTrain::OnCommand_waterheaterbreakerclose },
+    { user_command::waterheaterbreakeropen, &TTrain::OnCommand_waterheaterbreakeropen },
+    { user_command::waterheatertoggle, &TTrain::OnCommand_waterheatertoggle },
+    { user_command::waterheaterenable, &TTrain::OnCommand_waterheaterenable },
+    { user_command::waterheaterdisable, &TTrain::OnCommand_waterheaterdisable },
+    { user_command::waterpumpbreakertoggle, &TTrain::OnCommand_waterpumpbreakertoggle },
+    { user_command::waterpumpbreakerclose, &TTrain::OnCommand_waterpumpbreakerclose },
+    { user_command::waterpumpbreakeropen, &TTrain::OnCommand_waterpumpbreakeropen },
+    { user_command::waterpumptoggle, &TTrain::OnCommand_waterpumptoggle },
+    { user_command::waterpumpenable, &TTrain::OnCommand_waterpumpenable },
+    { user_command::waterpumpdisable, &TTrain::OnCommand_waterpumpdisable },
+    { user_command::watercircuitslinktoggle, &TTrain::OnCommand_watercircuitslinktoggle },
+    { user_command::watercircuitslinkenable, &TTrain::OnCommand_watercircuitslinkenable },
+    { user_command::watercircuitslinkdisable, &TTrain::OnCommand_watercircuitslinkdisable },
+    { user_command::convertertoggle, &TTrain::OnCommand_convertertoggle },
+    { user_command::converterenable, &TTrain::OnCommand_converterenable },
+    { user_command::converterdisable, &TTrain::OnCommand_converterdisable },
+    { user_command::convertertogglelocal, &TTrain::OnCommand_convertertogglelocal },
+    { user_command::converteroverloadrelayreset, &TTrain::OnCommand_converteroverloadrelayreset },
+    { user_command::compressortoggle, &TTrain::OnCommand_compressortoggle },
+    { user_command::compressorenable, &TTrain::OnCommand_compressorenable },
+    { user_command::compressordisable, &TTrain::OnCommand_compressordisable },
+    { user_command::compressortogglelocal, &TTrain::OnCommand_compressortogglelocal },
+    { user_command::motorblowerstogglefront, &TTrain::OnCommand_motorblowerstogglefront },
+    { user_command::motorblowerstogglerear, &TTrain::OnCommand_motorblowerstogglerear },
+    { user_command::motorblowersdisableall, &TTrain::OnCommand_motorblowersdisableall },
+    { user_command::coolingfanstoggle, &TTrain::OnCommand_coolingfanstoggle },
+    { user_command::motorconnectorsopen, &TTrain::OnCommand_motorconnectorsopen },
+    { user_command::motorconnectorsclose, &TTrain::OnCommand_motorconnectorsclose },
+    { user_command::motordisconnect, &TTrain::OnCommand_motordisconnect },
+    { user_command::motoroverloadrelaythresholdtoggle, &TTrain::OnCommand_motoroverloadrelaythresholdtoggle },
+    { user_command::motoroverloadrelaythresholdsetlow, &TTrain::OnCommand_motoroverloadrelaythresholdsetlow },
+    { user_command::motoroverloadrelaythresholdsethigh, &TTrain::OnCommand_motoroverloadrelaythresholdsethigh },
+    { user_command::motoroverloadrelayreset, &TTrain::OnCommand_motoroverloadrelayreset },
+    { user_command::heatingtoggle, &TTrain::OnCommand_heatingtoggle },
+    { user_command::heatingenable, &TTrain::OnCommand_heatingenable },
+    { user_command::heatingdisable, &TTrain::OnCommand_heatingdisable },
+    { user_command::lightspresetactivatenext, &TTrain::OnCommand_lightspresetactivatenext },
+    { user_command::lightspresetactivateprevious, &TTrain::OnCommand_lightspresetactivateprevious },
+    { user_command::headlighttoggleleft, &TTrain::OnCommand_headlighttoggleleft },
+    { user_command::headlightenableleft, &TTrain::OnCommand_headlightenableleft },
+    { user_command::headlightdisableleft, &TTrain::OnCommand_headlightdisableleft },
+    { user_command::headlighttoggleright, &TTrain::OnCommand_headlighttoggleright },
+    { user_command::headlightenableright, &TTrain::OnCommand_headlightenableright },
+    { user_command::headlightdisableright, &TTrain::OnCommand_headlightdisableright },
+    { user_command::headlighttoggleupper, &TTrain::OnCommand_headlighttoggleupper },
+    { user_command::headlightenableupper, &TTrain::OnCommand_headlightenableupper },
+    { user_command::headlightdisableupper, &TTrain::OnCommand_headlightdisableupper },
+    { user_command::redmarkertoggleleft, &TTrain::OnCommand_redmarkertoggleleft },
+    { user_command::redmarkerenableleft, &TTrain::OnCommand_redmarkerenableleft },
+    { user_command::redmarkerdisableleft, &TTrain::OnCommand_redmarkerdisableleft },
+    { user_command::redmarkertoggleright, &TTrain::OnCommand_redmarkertoggleright },
+    { user_command::redmarkerenableright, &TTrain::OnCommand_redmarkerenableright },
+    { user_command::redmarkerdisableright, &TTrain::OnCommand_redmarkerdisableright },
+    { user_command::headlighttogglerearleft, &TTrain::OnCommand_headlighttogglerearleft },
+    { user_command::headlighttogglerearright, &TTrain::OnCommand_headlighttogglerearright },
+    { user_command::headlighttogglerearupper, &TTrain::OnCommand_headlighttogglerearupper },
+    { user_command::redmarkertogglerearleft, &TTrain::OnCommand_redmarkertogglerearleft },
+    { user_command::redmarkertogglerearright, &TTrain::OnCommand_redmarkertogglerearright },
+    { user_command::redmarkerstoggle, &TTrain::OnCommand_redmarkerstoggle },
+    { user_command::endsignalstoggle, &TTrain::OnCommand_endsignalstoggle },
+    { user_command::headlightsdimtoggle, &TTrain::OnCommand_headlightsdimtoggle },
+    { user_command::headlightsdimenable, &TTrain::OnCommand_headlightsdimenable },
+    { user_command::headlightsdimdisable, &TTrain::OnCommand_headlightsdimdisable },
+    { user_command::interiorlighttoggle, &TTrain::OnCommand_interiorlighttoggle },
+    { user_command::interiorlightenable, &TTrain::OnCommand_interiorlightenable },
+    { user_command::interiorlightdimdisable, &TTrain::OnCommand_interiorlightdisable },
+    { user_command::interiorlightdimtoggle, &TTrain::OnCommand_interiorlightdimtoggle },
+    { user_command::interiorlightdimenable, &TTrain::OnCommand_interiorlightdimenable },
+    { user_command::interiorlightdimdisable, &TTrain::OnCommand_interiorlightdimdisable },
+    { user_command::instrumentlighttoggle, &TTrain::OnCommand_instrumentlighttoggle },
+    { user_command::instrumentlightenable, &TTrain::OnCommand_instrumentlightenable },
+    { user_command::instrumentlightdisable, &TTrain::OnCommand_instrumentlightdisable },
+    { user_command::dashboardlighttoggle, &TTrain::OnCommand_dashboardlighttoggle },
+    { user_command::timetablelighttoggle, &TTrain::OnCommand_timetablelighttoggle },
+    { user_command::doorlocktoggle, &TTrain::OnCommand_doorlocktoggle },
+    { user_command::doortoggleleft, &TTrain::OnCommand_doortoggleleft },
+    { user_command::doortoggleright, &TTrain::OnCommand_doortoggleright },
+    { user_command::doorpermitleft, &TTrain::OnCommand_doorpermitleft },
+    { user_command::doorpermitright, &TTrain::OnCommand_doorpermitright },
+    { user_command::doorpermitpresetactivatenext, &TTrain::OnCommand_doorpermitpresetactivatenext },
+    { user_command::doorpermitpresetactivateprevious, &TTrain::OnCommand_doorpermitpresetactivateprevious },
+    { user_command::dooropenleft, &TTrain::OnCommand_dooropenleft },
+    { user_command::dooropenright, &TTrain::OnCommand_dooropenright },
+    { user_command::doorcloseleft, &TTrain::OnCommand_doorcloseleft },
+    { user_command::doorcloseright, &TTrain::OnCommand_doorcloseright },
+    { user_command::dooropenall, &TTrain::OnCommand_dooropenall },
+    { user_command::doorcloseall, &TTrain::OnCommand_doorcloseall },
+    { user_command::doorsteptoggle, &TTrain::OnCommand_doorsteptoggle },
+    { user_command::carcouplingincrease, &TTrain::OnCommand_carcouplingincrease },
+    { user_command::carcouplingdisconnect, &TTrain::OnCommand_carcouplingdisconnect },
+    { user_command::departureannounce, &TTrain::OnCommand_departureannounce },
+    { user_command::hornlowactivate, &TTrain::OnCommand_hornlowactivate },
+    { user_command::hornhighactivate, &TTrain::OnCommand_hornhighactivate },
+    { user_command::whistleactivate, &TTrain::OnCommand_whistleactivate },
+    { user_command::radiotoggle, &TTrain::OnCommand_radiotoggle },
+    { user_command::radiochannelincrease, &TTrain::OnCommand_radiochannelincrease },
+    { user_command::radiochanneldecrease, &TTrain::OnCommand_radiochanneldecrease },
+    { user_command::radiostopsend, &TTrain::OnCommand_radiostopsend },
+    { user_command::radiostoptest, &TTrain::OnCommand_radiostoptest },
+    { user_command::cabchangeforward, &TTrain::OnCommand_cabchangeforward },
+    { user_command::cabchangebackward, &TTrain::OnCommand_cabchangebackward },
+    { user_command::generictoggle0, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle1, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle2, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle3, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle4, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle5, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle6, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle7, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle8, &TTrain::OnCommand_generictoggle },
+    { user_command::generictoggle9, &TTrain::OnCommand_generictoggle },
 
     {user_command::vehiclemove, &TTrain::OnCommand_vehiclemove},
     {user_command::vehiclemoveforwards, &TTrain::OnCommand_vehiclemoveforwards},
@@ -1938,14 +1939,12 @@ void TTrain::OnCommand_reverserbackward(TTrain *Train, command_data const &Comma
 
 void TTrain::OnCommand_alerteracknowledge(TTrain *Train, command_data const &Command)
 {
-	if (Train->mvOccupied->TrainType != dt_EZT && Train->mvOccupied->ActiveDir == 0)
-		return; // Ra 2014-03: w EZT nie trzeba ustawiać kierunku
-
 	if (Command.action == GLFW_PRESS)
 	{
 		// visual feedback
 		Train->ggSecurityResetButton.UpdateValue(1.0, Train->dsbSwitch);
 
+		if (Train->mvOccupied->TrainType == dt_EZT || Train->mvOccupied->ActiveDir != 0)
 		Train->mvOccupied->SecuritySystem.acknowledge_press();
 	}
 	else if (Command.action == GLFW_RELEASE)
@@ -1953,11 +1952,20 @@ void TTrain::OnCommand_alerteracknowledge(TTrain *Train, command_data const &Com
 		// visual feedback
 		Train->ggSecurityResetButton.UpdateValue(0.0);
 
+		if (Train->mvOccupied->TrainType == dt_EZT || Train->mvOccupied->ActiveDir != 0)
 		Train->mvOccupied->SecuritySystem.acknowledge_release();
 	}
 }
 
-void TTrain::OnCommand_batterytoggle(TTrain *Train, command_data const &Command)
+
+void TTrain::OnCommand_cabsignalacknowledge( TTrain *Train, command_data const &Command ) {
+	// TODO: visual feedback
+	if( Command.action == GLFW_PRESS ) {
+		Train->mvOccupied->SecuritySystem.cabsignal_reset();
+	}
+}
+
+void TTrain::OnCommand_batterytoggle( TTrain *Train, command_data const &Command )
 {
 	if (Command.action == GLFW_PRESS)
 	{
@@ -2035,24 +2043,20 @@ void TTrain::OnCommand_batterydisable(TTrain *Train, command_data const &Command
 
 void TTrain::OnCommand_pantographtogglefront(TTrain *Train, command_data const &cmd)
 {
-	command_data Command = cmd;
-
-	if (Command.action == GLFW_PRESS)
-	{
+	if( cmd.action == GLFW_PRESS ) {
 		// only reacting to press, so the switch doesn't flip back and forth if key is held down
 		if (false == Train->mvControlled->PantFrontUp)
 		{
 			// turn on...
-			OnCommand_pantographraisefront(Train, Command);
+			OnCommand_pantographraisefront( Train, cmd );
 		}
 		else
 		{
 			// ...or turn off
-			OnCommand_pantographlowerfront(Train, Command);
+			OnCommand_pantographlowerfront( Train, cmd );
 		}
 	}
-	else if (Command.action == GLFW_RELEASE)
-	{
+	else if( cmd.action == GLFW_RELEASE ) {
 		// impulse switches return automatically to neutral position
 		// NOTE: this routine is used also by dedicated raise and lower commands
 		if (Train->mvOccupied->PantSwitchType == "impulse")
@@ -2078,24 +2082,21 @@ void TTrain::OnCommand_pantographtogglefront(TTrain *Train, command_data const &
 
 void TTrain::OnCommand_pantographtogglerear(TTrain *Train, command_data const &cmd)
 {
-	command_data Command = cmd;
 
-	if (Command.action == GLFW_PRESS)
-	{
+	if( cmd.action == GLFW_PRESS ) {
 		// only reacting to press, so the switch doesn't flip back and forth if key is held down
 		if (false == Train->mvControlled->PantRearUp)
 		{
 			// turn on...
-			OnCommand_pantographraiserear(Train, Command);
+			OnCommand_pantographraiserear( Train, cmd );
 		}
 		else
 		{
 			// ...or turn off
-			OnCommand_pantographlowerrear(Train, Command);
+			OnCommand_pantographlowerrear( Train, cmd );
 		}
 	}
-	else if (Command.action == GLFW_RELEASE)
-	{
+	else if( cmd.action == GLFW_RELEASE ) {
 		// impulse switches return automatically to neutral position
 		// NOTE: this routine is used also by dedicated raise and lower commands
 		if (Train->mvOccupied->PantSwitchType == "impulse")
@@ -5878,37 +5879,39 @@ void TTrain::OnCommand_cabchangebackward(TTrain *Train, command_data const &Comm
 	}
 }
 
-void TTrain::OnCommand_vehiclemove(TTrain *Train, const command_data &Command)
-{
-	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
-		return;
-
-	TDynamicObject *d = Train->DynamicObject;
-	while (d)
-	{
-		d->Move(Command.param1 * d->DirectionGet());
+void TTrain::vehiclemove(float distance) {
+	TDynamicObject *d = DynamicObject;
+	while( d ) {
+		d->Move( distance * d->DirectionGet() );
 		d = d->Next(); // pozostałe też
 	}
-	d = Train->DynamicObject->Prev();
-	while (d)
-	{
-		d->Move(Command.param1 * d->DirectionGet());
+	d = DynamicObject->Prev();
+	while( d ) {
+		d->Move( distance * d->DirectionGet() );
 		d = d->Prev(); // w drugą stronę też
 	}
 }
 
-void TTrain::OnCommand_vehiclemoveforwards(TTrain *Train, const command_data &Command)
-{
-	command_data modified = Command;
-	modified.param1 = 100.0;
-	OnCommand_vehiclemove(Train, modified);
+void TTrain::OnCommand_vehiclemove(TTrain *Train, const command_data &Command) {
+	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
+		return;
+
+	Train->vehiclemove(Command.param1);
+}
+
+void TTrain::OnCommand_vehiclemoveforwards(TTrain *Train, const command_data &Command) {
+	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
+		return;
+
+	Train->vehiclemove(100.0);
 }
 
 void TTrain::OnCommand_vehiclemovebackwards(TTrain *Train, const command_data &Command)
 {
-	command_data modified = Command;
-	modified.param1 = -100.0;
-	OnCommand_vehiclemove(Train, modified);
+	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
+		return;
+
+	Train->vehiclemove(-100.0);
 }
 
 void TTrain::OnCommand_vehicleboost(TTrain *Train, const command_data &Command)

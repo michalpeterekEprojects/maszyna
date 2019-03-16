@@ -656,9 +656,9 @@ basic_cell::launch_event( TEventLauncher *Launcher, bool local_only ) {
 		}
 	} else {
 		if (Global.shiftState && Launcher->Event2 != nullptr)
-			m_relay.post(user_command::queueevent, (double)simulation::Events.GetEventId(Launcher->Event2), 0.0, GLFW_PRESS, 0);
+			m_relay.post(user_command::queueevent, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &Launcher->Event2->name());
 		else if (Launcher->Event1)
-			m_relay.post(user_command::queueevent, (double)simulation::Events.GetEventId(Launcher->Event1), 0.0, GLFW_PRESS, 0);
+			m_relay.post(user_command::queueevent, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &Launcher->Event1->name());
 	}
 }
 
@@ -1711,13 +1711,22 @@ void basic_region::create_map_geometry()
                 s->create_map_geometry(m_map_geometrybank);
         }
 
-	std::vector<gfx::basic_vertex> poi_vertices;
-	for (const auto sem : map::Objects.entries) {
-		poi_vertices.push_back(gfx::basic_vertex(sem->location, glm::vec3(), glm::vec3()));
-	}
+	update_poi_geometry();
+}
 
-	gfx::geometrybank_handle poibank = GfxRenderer.Create_Bank();
-	m_map_poipoints = GfxRenderer.Insert(poi_vertices, poibank, GL_POINTS);
+void basic_region::update_poi_geometry()
+{
+	std::vector<gfx::basic_vertex> vertices;
+	for (const auto sem : map::Objects.entries)
+		vertices.push_back(gfx::basic_vertex(sem->location, glm::vec3(), glm::vec3()));
+
+	if (!m_map_poipoints) {
+		gfx::geometrybank_handle poibank = GfxRenderer.Create_Bank();
+		m_map_poipoints = GfxRenderer.Insert(vertices, poibank, GL_POINTS);
+	}
+	else {
+		GfxRenderer.Replace(vertices, m_map_poipoints, GL_POINTS);
+	}
 }
 
 } // scene

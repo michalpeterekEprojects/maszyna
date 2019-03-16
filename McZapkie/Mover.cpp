@@ -82,7 +82,7 @@ int DirF(int CouplerN)
 void TSecuritySystem::set_enabled(bool e) {
 	if (vigilance_enabled || cabsignal_enabled)
 		enabled = e;
-	if (enabled && cabsignal_enabled && !is_sifa) {
+	if (enabled && cabsignal_enabled) {
 		cabsignal_active = true;
 		alert_timer = SoundSignalDelay;
 	}
@@ -91,14 +91,15 @@ void TSecuritySystem::set_enabled(bool e) {
 void TSecuritySystem::acknowledge_press() {
 	pressed = true;
 
-	if (cabsignal_active) {
+	if (!separate_acknowledge && cabsignal_active) {
 		cabsignal_active = false;
 		alert_timer = 0.0;
 		return;
 	}
 
+	if (vigilance_timer > AwareDelay)
+		alert_timer = 0.0;
 	vigilance_timer = 0.0;
-	alert_timer = 0.0;
 }
 
 void TSecuritySystem::acknowledge_release() {
@@ -106,6 +107,13 @@ void TSecuritySystem::acknowledge_release() {
 
 	press_timer = 0.0;
 	alert_timer = 0.0;
+}
+
+void TSecuritySystem::cabsignal_reset() {
+	if (cabsignal_active) {
+		cabsignal_active = false;
+		alert_timer = 0.0;
+	}
 }
 
 void TSecuritySystem::update(double dt, double vel) {
@@ -176,6 +184,8 @@ void TSecuritySystem::load(std::string const &line, double Vmax) {
 		cabsignal_enabled = true;
 	if( awaresystem.find( "Sifa" ) != std::string::npos )
 		is_sifa = true;
+	if( awaresystem.find( "SeparateAcknowledge" ) != std::string::npos )
+		separate_acknowledge = true;
 
 	extract_value( AwareDelay, "AwareDelay", line, "" );
 	AwareMinSpeed = 0.1 * Vmax; //domyślnie 10% Vmax
@@ -8399,6 +8409,7 @@ void TMoverParameters::LoadFIZ_Cntrl( std::string const &line ) {
                 { "MHZ_EN57", TBrakeHandle::MHZ_EN57 },
 				{ "MHZ_K5P", TBrakeHandle::MHZ_K5P },
 				{ "MHZ_K8P", TBrakeHandle::MHZ_K8P },
+				{ "MHZ_6P", TBrakeHandle::MHZ_6P },
                 { "M394", TBrakeHandle::M394 },
                 { "Knorr", TBrakeHandle::Knorr },
                 { "Westinghouse", TBrakeHandle::West },
@@ -8412,6 +8423,10 @@ void TMoverParameters::LoadFIZ_Cntrl( std::string const &line ) {
                 lookup->second :
                 TBrakeHandle::NoHandle;
         }
+		Handle_AutomaticOverload = (extract_value("HAO", line) == "Yes");
+		Handle_ManualOverload = (extract_value("HMO", line) == "Yes");
+		extract_value(Handle_GenericDoubleParameter1, "HGDP1", line, "");
+		extract_value(Handle_GenericDoubleParameter2, "HGDP2", line, "");
         // brakelochandle
         {
             std::map<std::string, TBrakeHandle> locbrakehandles{
@@ -9223,9 +9238,13 @@ bool TMoverParameters::CheckLocomotiveParameters(bool ReadyFlag, int Dir)
 		case TBrakeHandle::MHZ_K5P:
 			Handle = std::make_shared<TMHZ_K5P>();
 			break;
+		case TBrakeHandle::MHZ_6P:
+			Handle = std::make_shared<TMHZ_6P>();
+			break;
         default:
             Handle = std::make_shared<TDriverHandle>();
     }
+	Handle->SetParams(Handle_AutomaticOverload, Handle_ManualOverload, Handle_GenericDoubleParameter1, Handle_GenericDoubleParameter2);
 
     switch( BrakeLocHandle ) {
         case TBrakeHandle::FD1:

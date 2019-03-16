@@ -42,13 +42,25 @@ class switch_window : public popup
 	virtual void render_content() override;
 };
 
-class obstacle_window : public popup
+class obstacle_insert_window : public popup
 {
 	glm::dvec3 m_position;
 	std::vector<std::pair<std::string, std::string>> m_obstacles;
+	command_relay m_relay;
 
   public:
-	obstacle_window(ui_panel &panel, glm::dvec3 const &pos);
+	obstacle_insert_window(ui_panel &panel, glm::dvec3 const &pos);
+
+	virtual void render_content() override;
+};
+
+class obstacle_remove_window : public popup
+{
+	std::shared_ptr<map::obstacle> m_obstacle;
+	command_relay m_relay;
+
+  public:
+	obstacle_remove_window(ui_panel &panel, std::shared_ptr<map::obstacle> &&obstacle);
 
 	virtual void render_content() override;
 };

@@ -221,6 +221,7 @@ class TTrain
     static void OnCommand_reverserneutral( TTrain *Train, command_data const &Command );
     static void OnCommand_reverserbackward( TTrain *Train, command_data const &Command );
     static void OnCommand_alerteracknowledge( TTrain *Train, command_data const &Command );
+	static void OnCommand_cabsignalacknowledge( TTrain *Train, command_data const &Command );
     static void OnCommand_batterytoggle( TTrain *Train, command_data const &Command );
     static void OnCommand_batteryenable( TTrain *Train, command_data const &Command );
     static void OnCommand_batterydisable( TTrain *Train, command_data const &Command );
@@ -354,6 +355,9 @@ class TTrain
 	static void OnCommand_vehiclemoveforwards( TTrain *Train, command_data const &Command );
 	static void OnCommand_vehiclemovebackwards( TTrain *Train, command_data const &Command );
 	static void OnCommand_vehicleboost( TTrain *Train, command_data const &Command );
+
+	void vehiclemove(float distance);
+
 
 // members
     TDynamicObject *DynamicObject { nullptr }; // przestawia zmiana pojazdu [F5]

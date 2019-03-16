@@ -264,8 +264,9 @@ void ui::map_panel::render_contents()
 				else
 				{
 					glm::vec3 nearest = simulation::Region->find_nearest_track_point(world_pos);
-					if (!glm::isnan(nearest.x) && glm::distance(world_pos, nearest) < (0.03f / zoom))
-						register_popup(std::make_unique<obstacle_window>(*this, std::move(nearest)));
+					if (!glm::isnan(nearest.x)
+					        && glm::distance(glm::vec2(world_pos.x, world_pos.z), glm::vec2(nearest.x, nearest.z)) < 60.0f)
+						register_popup(std::make_unique<obstacle_insert_window>(*this, std::move(nearest)));
 				}
 			}
 			else if (!objects.empty())
@@ -287,6 +288,10 @@ void ui::handle_map_object_click(ui_panel &parent, std::shared_ptr<map::map_obje
 	else if (auto track = std::dynamic_pointer_cast<map::track_switch>(obj))
 	{
 		parent.register_popup(std::make_unique<switch_window>(parent, std::move(track)));
+	}
+	else if (auto obstacle = std::dynamic_pointer_cast<map::obstacle>(obj))
+	{
+		parent.register_popup(std::make_unique<obstacle_remove_window>(parent, std::move(obstacle)));
 	}
 }
 
@@ -323,7 +328,7 @@ void ui::handle_map_object_hover(std::shared_ptr<map::map_object> &obj)
 			ImGui::PopID();
 		}
 	}
-	else if (auto sw = std::dynamic_pointer_cast<map::track_switch>(obj))
+	else if (auto sw = std::dynamic_pointer_cast<map::map_object>(obj))
 	{
 		ImGui::TextUnformatted(sw->name.c_str());
 	}
@@ -379,8 +384,7 @@ void ui::semaphore_window::render_content()
 				if (level >= 3.0f)
 					level = 0.0f;
 
-				int id = simulation::Instances.find_id(model->name());
-				m_relay.post(user_command::setlight, (double)i, level, id, 0);
+				m_relay.post(user_command::setlight, (double)i, level, GLFW_PRESS, 0, glm::vec3(0.0f), &model->name());
 			}
 
 			ImGui::PopStyleColor(2);
@@ -402,7 +406,7 @@ void ui::semaphore_window::render_content()
 
 		if (ImGui::Button(displayname.c_str()))
 		{
-			m_relay.post(user_command::queueevent, (double)simulation::Events.GetEventId(item), 0.0, GLFW_PRESS, 0);
+			m_relay.post(user_command::queueevent, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &item->name());
 		}
 	}
 }
@@ -415,21 +419,24 @@ void ui::switch_window::render_content()
 
 	if (ImGui::Button(LOC_STR(map_straight)))
 	{
-		m_relay.post(user_command::queueevent, (double)simulation::Events.GetEventId(m_switch->straight_event), 0.0, GLFW_PRESS, 0);
+		m_relay.post(user_command::queueevent, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &m_switch->straight_event->name());
 		ImGui::CloseCurrentPopup();
 	}
 
 	if (ImGui::Button(LOC_STR(map_divert)))
 	{
-		m_relay.post(user_command::queueevent, (double)simulation::Events.GetEventId(m_switch->divert_event), 0.0, GLFW_PRESS, 0);
+		m_relay.post(user_command::queueevent, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &m_switch->divert_event->name());
 		ImGui::CloseCurrentPopup();
 	}
 }
 
-ui::obstacle_window::obstacle_window(ui_panel &panel, glm::dvec3 const &pos) : popup(panel), m_position(pos)
+ui::obstacle_insert_window::obstacle_insert_window(ui_panel &panel, glm::dvec3 const &pos) : popup(panel), m_position(pos)
 {
 	std::ifstream file;
 	file.open("obstaclebank.txt", std::ios_base::in | std::ios_base::binary);
+
+	if (!file.is_open())
+		return;
 
 	std::string line;
 	while (std::getline(file, line))
@@ -445,16 +452,56 @@ ui::obstacle_window::obstacle_window(ui_panel &panel, glm::dvec3 const &pos) : p
 	}
 }
 
-void ui::obstacle_window::render_content()
+void ui::obstacle_insert_window::render_content()
 {
+	if (m_obstacles.empty()) {
+		ImGui::CloseCurrentPopup();
+		return;
+	}
+
 	ImGui::TextUnformatted(LOC_STR(map_obstacle_insert));
 	for (auto const &entry : m_obstacles)
 	{
 		if (ImGui::Button(entry.first.c_str()))
 		{
 			std::string name("obstacle_" + std::to_string(LocalRandom(0.0, 100000.0)));
-			TAnimModel *cloned = simulation::State.create_model(entry.second, name, m_position);
+
+			std::string payload(name + ':' + entry.second);
+			m_relay.post(user_command::insertmodel, 0.0, 0.0, GLFW_PRESS, 0, m_position, &payload);
+
+			auto obstacle = std::make_shared<map::obstacle>();
+			obstacle->name = entry.first;
+			obstacle->location = m_position;
+			obstacle->model_name = name;
+			map::Objects.entries.push_back(std::move(obstacle));
+
+			std::vector<gfx::basic_vertex> vertices;
+			vertices.emplace_back((glm::vec3)m_position, glm::vec3(), glm::vec3());
+			GfxRenderer.Append(vertices, simulation::Region->get_map_poi_geometry(), GL_POINTS);
+
 			ImGui::CloseCurrentPopup();
 		}
+	}
+}
+
+ui::obstacle_remove_window::obstacle_remove_window(ui_panel &panel, std::shared_ptr<map::obstacle> &&obstacle)
+    : popup(panel), m_obstacle(obstacle) { }
+
+void ui::obstacle_remove_window::render_content()
+{
+	if (ImGui::Button(LOC_STR(map_obstacle_remove))) {
+		m_relay.post(user_command::deletemodel, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(), &m_obstacle->model_name);
+
+		auto &entries = map::Objects.entries;
+		for (auto it = entries.rbegin(); it != entries.rend(); it++) {
+			if (*it == m_obstacle) {
+				entries.erase(std::next(it).base());
+				break;
+			}
+		}
+
+		simulation::Region->update_poi_geometry();
+
+		ImGui::CloseCurrentPopup();
 	}
 }

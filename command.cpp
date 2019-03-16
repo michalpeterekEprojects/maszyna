@@ -116,6 +116,7 @@ commanddescription_sequence Commands_descriptions = {
     { "brakeloadcompensationdecrease", command_target::vehicle, command_mode::oneoff },
     { "mubrakingindicatortoggle", command_target::vehicle, command_mode::oneoff },
     { "alerteracknowledge", command_target::vehicle, command_mode::oneoff },
+    { "cabsignalacknowledge", command_target::vehicle, command_mode::oneoff },
     { "hornlowactivate", command_target::vehicle, command_mode::oneoff },
     { "hornhighactivate", command_target::vehicle, command_mode::oneoff },
     { "whistleactivate", command_target::vehicle, command_mode::oneoff },
@@ -228,6 +229,7 @@ commanddescription_sequence Commands_descriptions = {
     { "motorblowersdisableall", command_target::vehicle, command_mode::oneoff },
     { "coolingfanstoggle", command_target::vehicle, command_mode::oneoff },
     { "tempomattoggle", command_target::vehicle, command_mode::oneoff },
+    { "globalradiostop", command_target::simulation, command_mode::oneoff },
     { "timejump", command_target::simulation, command_mode::oneoff },
     { "timejumplarge", command_target::simulation, command_mode::oneoff },
     { "timejumpsmall", command_target::simulation, command_mode::oneoff },
@@ -242,8 +244,11 @@ commanddescription_sequence Commands_descriptions = {
     { "focuspauseset", command_target::simulation, command_mode::oneoff },
     { "pausetoggle", command_target::simulation, command_mode::oneoff },
     { "entervehicle", command_target::simulation, command_mode::oneoff },
+    { "resettrainset", command_target::simulation, command_mode::oneoff },
     { "queueevent", command_target::simulation, command_mode::oneoff },
     { "setlight", command_target::simulation, command_mode::oneoff },
+    { "insertmodel", command_target::simulation, command_mode::oneoff },
+    { "deletemodel", command_target::simulation, command_mode::oneoff },
 };
 
 } // simulation
@@ -332,7 +337,7 @@ void command_queue::push_commands(const commands_map &commands) {
 
 void
 command_relay::post(user_command const Command, double const Param1, double const Param2,
-                     int const Action, uint16_t Recipient, glm::vec3 Position) const {
+                     int const Action, uint16_t Recipient, glm::vec3 Position, const std::string *Payload) const {
 
     auto const &command = simulation::Commands_descriptions[ static_cast<std::size_t>( Command ) ];
 
@@ -356,6 +361,8 @@ command_relay::post(user_command const Command, double const Param1, double cons
 
 	uint32_t combined_recipient = static_cast<uint32_t>( command.target ) | Recipient;
 	command_data commanddata({Command, Action, Param1, Param2, Timer::GetDeltaTime(), FreeFlyModeFlag, Position });
+	if (Payload)
+		commanddata.payload = *Payload;
 
 	simulation::Commands.push(commanddata, combined_recipient);
 }

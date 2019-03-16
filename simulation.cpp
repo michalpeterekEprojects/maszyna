@@ -130,16 +130,17 @@ void state_manager::process_commands() {
 
 		if (commanddata.command == user_command::queueevent) {
 			uint32_t id = std::round(commanddata.param1);
-			basic_event *ev = Events.FindEventById(id); // TODO: depends on vector position
-			Events.AddToQuery(ev, nullptr);
+			basic_event *ev = Events.FindEvent(commanddata.payload);
+			if (ev)
+				Events.AddToQuery(ev, nullptr);
 		}
 
 		if (commanddata.command == user_command::setlight) {
-			uint32_t id = commanddata.action;
 			int light = std::round(commanddata.param1);
 			float state = commanddata.param2;
-			if (id < simulation::Instances.sequence().size())
-				simulation::Instances.sequence()[id]->LightSet(light, state); // TODO: depends on vector position
+			TAnimModel *model = simulation::Instances.find(commanddata.payload);
+			if (model)
+				model->LightSet(light, state);
 		}
 
 		if (commanddata.command == user_command::setdatetime) {
@@ -161,6 +162,47 @@ void state_manager::process_commands() {
 			Global.AirTemperature = commanddata.param1;
 		}
 
+		if (commanddata.command == user_command::insertmodel) {
+			std::istringstream ss(commanddata.payload);
+
+			std::string name;
+			std::string data;
+			std::getline(ss, name, ':');
+			std::getline(ss, data, ':');
+
+			simulation::State.create_model(data, name, commanddata.location);
+		}
+
+		if (commanddata.command == user_command::deletemodel) {
+			simulation::State.delete_model(simulation::Instances.find(commanddata.payload));
+		}
+
+		if (commanddata.command == user_command::radiostop) {
+			simulation::Region->RadioStop( commanddata.location );
+		}
+
+		if (commanddata.command == user_command::resettrainset) {
+			TDynamicObject *found_vehicle = simulation::Vehicles.find(commanddata.payload);
+			TDynamicObject *vehicle = found_vehicle;
+
+			while (vehicle) {
+				vehicle->MoverParameters->DamageFlag = 0;
+				vehicle->MoverParameters->EngDmgFlag = 0;
+				vehicle->MoverParameters->V = 0.0;
+				vehicle->MoverParameters->DistCounter = 0.0;
+				vehicle = vehicle->Next();
+			}
+
+			vehicle = found_vehicle;
+			while (vehicle) {
+				vehicle->MoverParameters->DamageFlag = 0;
+				vehicle->MoverParameters->EngDmgFlag = 0;
+				vehicle->MoverParameters->V = 0.0;
+				vehicle->MoverParameters->DistCounter = 0.0;
+				vehicle = vehicle->Prev();
+			}
+		}
+
 		if (DebugModeFlag) {
 			if (commanddata.command == user_command::timejump) {
 				Time.update(commanddata.param1);
@@ -177,6 +219,11 @@ void state_manager::process_commands() {
 
 TAnimModel * state_manager::create_model(const std::string &src, const std::string &name, const glm::dvec3 &position) {
 	return m_serializer.create_model(src, name, position);
+}
+
+void state_manager::delete_model(TAnimModel *model) {
+	Region->erase(model);
+	Instances.purge(model);
 }
 
 void
