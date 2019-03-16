@@ -638,10 +638,14 @@ public: // reszta może by?publiczna
     Math3D::vector3 pMechOffset; // base position of the driver in the cab
     glm::vec2 pMechViewAngle { 0.0, 0.0 }; // camera pitch and yaw values, preserved while in external view
 
-// Events by Michal Peterek
+/* 
+ *	Events by Michal Peterek ( yes this functions must be not declared! ) 
+ *  If you want you can add your own events bellow..
+ *  to raise the event call  __raise x(y);
+ */
 	__event void OnInteriorlightChanged(int Action); // Actions : 0x00 - Turn off, 0x01 - Turn on
 	__event void OnReverserChanged(int Action); // Actions : -0x01 - Forward, 0x00 - neutral, 0x01 - forward
-	__event void OnInstrumentlightChanged(int Action);
+	__event void OnInstrumentlightChanged(int Action); // Actions : 0x00 - Turn off, 0x01 - Turn on
 
 private:
     double fBlinkTimer;

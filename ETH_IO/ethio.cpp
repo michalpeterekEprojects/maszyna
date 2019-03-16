@@ -37,6 +37,7 @@ void ethio::HookTrain(void *trainObj)
 	if (trainObj != nullptr)
 	{
 		__hook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnInteriorlightChangedEventHandler);
+		__hook(&TTrain::OnReverserChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnReverserChangedEventHandler);
 		this->ActualConnectTrain = trainObj;
 	}
 }
@@ -44,7 +45,10 @@ void ethio::HookTrain(void *trainObj)
 void ethio::UnHookTrain( void )
 {
 	if (this->ActualConnectTrain != nullptr)
+	{
 		__unhook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnInteriorlightChangedEventHandler);
+		__unhook(&TTrain::OnReverserChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnReverserChangedEventHandler);
+	}
 }
 
 int ethio::Connect()
@@ -444,7 +448,83 @@ int ethio::WriteCommand(std::string CMD, double Value)
 	return 1;
 }
 
+int ethio::NetWrite(const char *Data, size_t Size)
+{
+	return send(this->Socket, Data, Size, 0);
+}
+
+int ethio::SendFrame(std::string FrameType, int Value)
+{
+	int iResult = 0;
+
+	do
+	{
+		rapidjson::Document JsonObject;
+		JsonObject.SetObject();
+		rapidjson::Document::AllocatorType &allocator = JsonObject.GetAllocator();
+
+		rapidjson::Value Event(rapidjson::kStringType);
+
+		Event.SetString(FrameType.c_str(), allocator);
+		JsonObject.AddMember("Event", Event, allocator);
+
+		Event.SetInt(Value);
+		JsonObject.AddMember("Value", Event, allocator);
+
+		//object.AddMember("Event", FrameType, allocator);
+		//object.AddMember("Data", Value, allocator);
+
+		rapidjson::StringBuffer strbuf;
+		rapidjson::Writer<rapidjson::StringBuffer> writer(strbuf);
+		JsonObject.Accept(writer);
+
+		strbuf.Put('\r');
+		strbuf.Put('\n');
+
+		if (!this->NetWrite(strbuf.GetString(), strbuf.GetLength()))
+			break;
+
+		iResult = 1;
+	} while (0);
+
+	return iResult;
+}
+
 void ethio::OnInteriorlightChangedEventHandler(int Action)
 {
-	WriteLog("Raised - OnInteriorlightChanged");
+	
+
+	if (this->SendFrame("InteriorlightChanged", Action))
+	{
+		WriteLog("ETH : Event send OK!");
+	}
+	else
+	{
+		WriteLog("ETH : Event send ERR!");
+	}
+}
+
+void ethio::OnReverserChangedEventHandler(int Action)
+{
+	if (this->SendFrame("ReverserChanged", Action))
+	{
+		WriteLog("ETH : Event send!");
+	}
+	else
+	{
+		WriteLog("ETH : Event send ERR!");
+	}
+}
+
+
+void ethio::OnInstrumentlightChangedEventHandler(int Action)
+{
+	if (this->SendFrame("InstrumentlightChanged", Action))
+	{
+		WriteLog("ETH : Event send!");
+	}
+	else
+	{
+		WriteLog("ETH : Event send ERR!");
+	}
 }

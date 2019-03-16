@@ -50,7 +50,13 @@ class ethio
 		}e_JSON_NAMES;
 	    command_relay relay;
 
+		//SendingFunctions
+	    int NetWrite(const char *Data, size_t Size);
+		int SendFrame(std::string FrameType, int Value);
+
 		//Events Handlers
 
 		void OnInteriorlightChangedEventHandler(int Action);
+	    void OnReverserChangedEventHandler(int Action);
+	    void OnInstrumentlightChangedEventHandler(int Action);
 };
