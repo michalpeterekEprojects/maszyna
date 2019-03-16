@@ -78,6 +78,7 @@ zwiekszenie nacisku przy duzych predkosciach w hamulcach Oerlikona
 */
 
 #include "dumb3d.h"
+#include "utilities.h"
 
 extern int ConversionError;
 
@@ -140,7 +141,7 @@ static int const ctrain_depot = 128;        //nie rozłączalny podczas zwykłyc
 // vehicle sides; exclusive
 enum end {
     front = 0,
-    rear
+    rear = 1
 };
 
 enum side {
@@ -200,17 +201,6 @@ static int const dbrake_passive = 1;
 static int const dbrake_switch = 2;
 static int const dbrake_reversal = 4;
 static int const dbrake_automatic = 8;
-
-/*status czuwaka/SHP*/
-//hunter-091012: rozdzielenie alarmow, dodanie testu czuwaka
-static int const s_waiting = 1; //działa
-static int const s_aware = 2;   //czuwak miga
-static int const s_active = 4;  //SHP świeci
-static int const s_CAalarm = 8;    //buczy
-static int const s_SHPalarm = 16;  //buczy
-static int const s_CAebrake = 32;  //hamuje
-static int const s_SHPebrake = 64; //hamuje
-static int const s_CAtest = 128;
 
 /*dzwieki*/
 enum sound {
@@ -369,7 +359,7 @@ enum class TBrakeSystem { Individual, Pneumatic, ElectroPneumatic };
 /*podtypy hamulcow zespolonych*/
 enum class TBrakeSubSystem { ss_None, ss_W, ss_K, ss_KK, ss_Hik, ss_ESt, ss_KE, ss_LSt, ss_MT, ss_Dako };
 enum class TBrakeValve { NoValve, W, W_Lu_VI, W_Lu_L, W_Lu_XR, K, Kg, Kp, Kss, Kkg, Kkp, Kks, Hikg1, Hikss, Hikp1, KE, SW, EStED, NESt3, ESt3, LSt, ESt4, ESt3AL2, EP1, EP2, M483, CV1_L_TR, CV1, CV1_R, Other };
-enum class TBrakeHandle { NoHandle, West, FV4a, M394, M254, FVel1, FVel6, D2, Knorr, FD1, BS2, testH, St113, MHZ_P, MHZ_T, MHZ_EN57, MHZ_K5P, MHZ_K8P };
+enum class TBrakeHandle { NoHandle, West, FV4a, M394, M254, FVE408, FVel6, D2, Knorr, FD1, BS2, testH, St113, MHZ_P, MHZ_T, MHZ_EN57, MHZ_K5P, MHZ_K8P };
 /*typy hamulcow indywidualnych*/
 enum class TLocalBrake { NoBrake, ManualBrake, PneumaticBrake, HydraulicBrake };
 /*dla osob/towar: opoznienie hamowania/odhamowania*/
@@ -572,23 +562,43 @@ struct TMotorParameters
     }
 };
 
-struct TSecuritySystem
+class TSecuritySystem
 {
-    int SystemType { 0 }; /*0: brak, 1: czuwak aktywny, 2: SHP/sygnalizacja kabinowa*/
-    double AwareDelay { -1.0 }; // czas powtarzania czuwaka
-	double AwareMinSpeed; // minimalna prędkość załączenia czuwaka, normalnie 10% Vmax
-    double SoundSignalDelay { -1.0 };
-    double EmergencyBrakeDelay { -1.0 };
-    int Status { 0 }; /*0: wylaczony, 1: wlaczony, 2: czuwak, 4: shp, 8: alarm, 16: hamowanie awaryjne*/
-    double SystemTimer { 0.0 };
-    double SystemSoundCATimer { 0.0 };
-    double SystemSoundSHPTimer { 0.0 };
-    double SystemBrakeCATimer { 0.0 };
-    double SystemBrakeSHPTimer { 0.0 };
-    double SystemBrakeCATestTimer { 0.0 }; // hunter-091012
-	int VelocityAllowed;
-	int NextVelocityAllowed; /*predkosc pokazywana przez sygnalizacje kabinowa*/
-	bool RadioStop; // czy jest RadioStop
+	bool vigilance_enabled = false;
+	bool cabsignal_enabled = false;
+	bool radiostop_enabled = false;
+
+	bool cabsignal_active = false;
+	bool pressed = false;
+	bool enabled = false;
+	bool is_sifa = false; // Sifa-like pedal device, with inverted input for convenient keyboard usage
+
+	double vigilance_timer = 0.0;
+	double alert_timer = 0.0;
+	double press_timer = 0.0;
+
+	double velocity = 0.0;
+
+	double AwareDelay = 30.0;
+	double AwareMinSpeed = 0.0;
+	double SoundSignalDelay = 5.0;
+	double EmergencyBrakeDelay = 5.0;
+	double MaxHoldTime = 5.0;
+
+public:
+	void set_enabled(bool e);
+	void acknowledge_press();
+	void acknowledge_release();
+	void update(double dt, double Vel);
+	void set_cabsignal();
+	bool is_blinking() const;
+	bool is_vigilance_blinking() const;
+	bool is_cabsignal_blinking() const;
+	bool is_beeping() const;
+	bool is_braking() const;
+	bool is_engine_blocked() const;
+	bool radiostop_available() const;
+	void load(std::string const &line, double Vmax);
 };
 
 struct TTransmision
@@ -609,18 +619,16 @@ struct power_coupling {
 struct TCoupling {
 	/*parametry*/
     double SpringKB = 1.0;   /*stala sprezystosci zderzaka/sprzegu, %tlumiennosci */
-    double SpringKC = 1.0;
-    double beta = 0.0;
     double DmaxB = 0.1; /*tolerancja scisku/rozciagania, sila rozerwania*/
     double FmaxB = 1000.0;
+    double SpringKC = 1.0;
     double DmaxC = 0.1;
     double FmaxC = 1000.0;
-	TCouplerType CouplerType = TCouplerType::NoCoupler;     /*typ sprzegu*/
-								  /*zmienne*/
+    double beta = 0.0;
+    TCouplerType CouplerType = TCouplerType::NoCoupler;     /*typ sprzegu*/
+	int AllowedFlag = 3; //Ra: maska dostępnych
+    /*zmienne*/
 	int CouplingFlag = 0; /*0 - wirtualnie, 1 - sprzegi, 2 - pneumatycznie, 4 - sterowanie, 8 - kabel mocy*/
-	int AllowedFlag = 3;       //Ra: znaczenie jak wyżej, maska dostępnych
-	bool Render = false;             /*ABu: czy rysowac jak zaczepiony sprzeg*/
-	double CoupleDist = 0.0;            /*ABu: optymalizacja - liczenie odleglosci raz na klatkę, bez iteracji*/
 	class TMoverParameters *Connected = nullptr; /*co jest podlaczone*/
     int ConnectedNr = 0;           //Ra: od której strony podłączony do (Connected): 0=przód, 1=tył
 	double CForce = 0.0;                /*sila z jaka dzialal*/
@@ -628,16 +636,26 @@ struct TCoupling {
 	bool CheckCollision = false;     /*czy sprawdzac sile czy pedy*/
 
     power_coupling power_high;
-    power_coupling power_low; // TODO: implement this
+//    power_coupling power_low; // TODO: implement this
 
     int sounds { 0 }; // sounds emitted by the coupling devices
+    bool Render = false;             /*ABu: czy rysowac jak zaczepiony sprzeg*/
 };
+
+class TDynamicObject;
+struct neighbour_data {
+    TDynamicObject *vehicle { nullptr }; // detected obstacle
+    int vehicle_end { -1 }; // facing end of the obstacle
+    float distance { 10000.f }; // distance to the obstacle // NOTE: legacy value. TBD, TODO: use standard -1 instead?
+};
+
+
 
 class TMoverParameters
 { // Ra: wrapper na kod pascalowy, przejmujący jego funkcje  Q: 20160824 - juz nie wrapper a klasa bazowa :)
 private:
 // types
-
+/* TODO: implement
     // communication cable, exchanging control signals with adjacent vehicle
     struct jumper_cable {
     // types
@@ -651,7 +669,7 @@ private:
         // integers
         // std::array<int, 1> values {};
     };
-
+*/
     // basic approximation of a generic device
     // TBD: inheritance or composition?
     struct basic_device {
@@ -716,6 +734,8 @@ private:
         bool is_closing { false }; // the door is currently closing
         bool is_opening { false }; // the door is currently opening
         bool is_open { false }; // the door is fully open
+        bool step_folding { false }; // the doorstep is currently closing
+        bool step_unfolding { false }; // the doorstep is currently opening
     };
 
     struct door_data {
@@ -741,6 +761,7 @@ private:
         std::vector<int> permit_presets; // permit presets selectable with preset switch
         // ld inputs
         bool lock_enabled { true };
+        bool step_enabled { true };
         // internal data
         int permit_preset { -1 }; // curent position of preset selection switch
         // vehicle parts
@@ -818,14 +839,12 @@ private:
 public:
 
 	double dMoveLen = 0.0;
-	std::string filename;
 	/*---opis lokomotywy, wagonu itp*/
 	/*--opis serii--*/
 	int CategoryFlag = 1;       /*1 - pociag, 2 - samochod, 4 - statek, 8 - samolot*/
 							/*--sekcja stalych typowych parametrow*/
 	std::string TypeName;         /*nazwa serii/typu*/
-								  //TrainType: string;       {typ: EZT/elektrowoz - Winger 040304}
-	int TrainType = 0; /*Ra: powinno być szybciej niż string*/
+	int TrainType = 0; /*typ: EZT/elektrowoz - Winger 040304 Ra: powinno być szybciej niż string*/
 	TEngineType EngineType = TEngineType::None;               /*typ napedu*/
 	TPowerParameters EnginePowerSource;    /*zrodlo mocy dla silnikow*/
 	TPowerParameters SystemPowerSource;    /*zrodlo mocy dla systemow sterowania/przetwornic/sprezarek*/
@@ -958,16 +977,23 @@ public:
 	int DynamicBrakeType = 0; /*patrz dbrake_**/
 	int DynamicBrakeAmpmeters = 2; /*liczba amperomierzy przy hamowaniu ED*/
 	double DynamicBrakeRes = 5.8; /*rezystancja oporników przy hamowaniu ED*/
-	double TUHEX_Sum = 750; /*nastawa sterownika hamowania ED*/
+	double DynamicBrakeRes1 = 5.8; /*rezystancja oporników przy hamowaniu ED - 1 tryb*/
+	double DynamicBrakeRes2 = 5.8; /*rezystancja oporników przy hamowaniu ED - 2 tryb*/
+	double TUHEX_Sum = 750; /*nastawa sterownika hamowania ED - aktualna*/
 	double TUHEX_Diff = 10; /*histereza działania sterownika hamowania ED*/
 	double TUHEX_MinIw = 60; /*minimalny prąd wzbudzenia przy hamowaniu ED - wynika z chk silnika*/
 	double TUHEX_MaxIw = 400; /*maksymalny prąd wzbudzenia przy hamowaniu ED - ograniczenie max siły*/
-
+	double TUHEX_Sum1 = 750; /*nastawa1 sterownika hamowania ED*/
+	double TUHEX_Sum2 = 750; /*nastawa2 sterownika hamowania ED*/
+	double TUHEX_Sum3 = 750; /*nastawa3 sterownika hamowania ED*/
+	int TUHEX_Stages = 0; /*liczba stopni hamowania ED*/
+    // TODO: wrap resistor fans variables and state into a device
 	int RVentType = 0;        /*0 - brak, 1 - jest, 2 - automatycznie wlaczany*/
 	double RVentnmax = 1.0;      /*maks. obroty wentylatorow oporow rozruchowych*/
 	double RVentCutOff = 0.0;      /*rezystancja wylaczania wentylatorow dla RVentType=2*/
     double RVentSpeed { 0.5 }; //rozpedzanie sie wentylatora obr/s^2}
     double RVentMinI { 50.0 }; //przy jakim pradzie sie wylaczaja}
+    bool RVentForceOn { false }; // forced activation switch
 	int CompressorPower = 1; // 0: main circuit, 1: z przetwornicy, reczne, 2: w przetwornicy, stale, 3: diesel engine, 4: converter of unit in front, 5: converter of unit behind
 	int SmallCompressorPower = 0; /*Winger ZROBIC*/
 	bool Trafo = false;      /*pojazd wyposażony w transformator*/
@@ -1041,6 +1067,12 @@ public:
 	bool MED_EPVC = 0; // czy korekcja sily hamowania EP, gdy nie ma dostepnego ED
 	double MED_EPVC_Time = 7; // czas korekcji sily hamowania EP, gdy nie ma dostepnego ED
 	bool MED_Ncor = 0; // czy korekcja sily hamowania z uwzglednieniem nacisku
+
+	int DCEMUED_CC; //na którym sprzęgu sprawdzać działanie ED
+	double DCEMUED_EP_max_Vel; //maksymalna prędkość, przy której działa EP przy włączonym ED w jednostce (dla tocznych)
+	double DCEMUED_EP_min_Im; //minimalny prąd, przy którym EP nie działa przy włączonym ED w członie (dla silnikowych)
+	double DCEMUED_EP_delay; //opóźnienie włączenia hamulca EP przy hamowaniu ED - zwłoka wstępna
+
 	/*-dla wagonow*/
     struct load_attributes {
         std::string name; // name of the cargo
@@ -1077,6 +1109,7 @@ public:
     TRotation Rot { 0.0, 0.0, 0.0 };
 	std::string Name;                       /*nazwa wlasna*/
 	TCoupling Couplers[2];  //urzadzenia zderzno-sprzegowe, polaczenia miedzy wagonami
+    std::array<neighbour_data, 2> Neighbours; // potential collision sources
 	bool EventFlag = false;                 /*!o true jesli cos nietypowego sie wydarzy*/
 	int SoundFlag = 0;                    /*!o patrz stale sound_ */
 	double DistCounter = 0.0;                  /*! licznik kilometrow */
@@ -1149,6 +1182,10 @@ public:
 	int BrakeOpModeFlag = 0;               /*nastawa trybu pracy PS/PN/EP/MED 1/2/4/8*/
 	int BrakeOpModes = 0;                   /*nastawy mozliwe do uzyskania*/
 	bool DynamicBrakeFlag = false;          /*czy wlaczony hamulec elektrodymiczny*/
+	bool DynamicBrakeEMUStatus = true;		/*czy hamulec ED dziala w ezt*/
+	int TUHEX_StageActual = 0;				/*aktualny stopien tuhexa*/
+	bool TUHEX_ResChange = false;			/*czy zmiana rezystancji hamowania ED - odwzbudzanie*/
+	bool TUHEX_Active = false;				/*czy hamowanie ED wywołane z zewnątrz*/
 									//                NapUdWsp: integer;
 	double LimPipePress = 0.0;                 /*stabilizator cisnienia*/
 	double ActFlowSpeed = 0.0;                 /*szybkosc stabilizatora*/
@@ -1255,9 +1292,14 @@ public:
 	double hydro_R_n = 0.0; /*predkosc obrotowa retardera*/
 
     /*- zmienne dla lokomotyw z silnikami indukcyjnymi -*/
+	double eimic = 0; /*aktualna pozycja zintegrowanego sterowania jazda i hamowaniem*/
+	double eimic_real = 0; /*faktycznie uzywana pozycja zintegrowanego sterowania jazda i hamowaniem*/
+	int EIMCtrlType = 0; /*rodzaj wariantu zadajnika jazdy*/
+	double eimv_pr = 0; /*realizowany procent dostepnej sily rozruchu/hamowania*/
 	double eimv[21];
     static std::vector<std::string> const eimv_labels;
 	double SpeedCtrlTimer = 0; /*zegar dzialania tempomatu z wybieralna predkoscia*/
+	double eimicSpeedCtrl = 0; /*pozycja sugerowana przez tempomat*/
 	double NewSpeed = 0; /*nowa predkosc do zadania*/
 	double MED_EPVC_CurrentTime = 0; /*aktualny czas licznika czasu korekcji siły EP*/
 
@@ -1307,24 +1349,19 @@ public:
 	double FrictConst2d= 0.0;
 	double TotalMassxg = 0.0; /*TotalMass*g*/
 
-	Math3D::vector3 vCoulpler[2]; // powtórzenie współrzędnych sprzęgów z DynObj :/
 	double fBrakeCtrlPos = -2.0; // płynna nastawa hamulca zespolonego
 	bool bPantKurek3 = true; // kurek trójdrogowy (pantografu): true=połączenie z ZG, false=połączenie z małą sprężarką // domyślnie zbiornik pantografu połączony jest ze zbiornikiem głównym
 	int iProblem = 0; // flagi problemów z taborem, aby AI nie musiało porównywać; 0=może jechać
 	int iLights[2]; // bity zapalonych świateł tutaj, żeby dało się liczyć pobór prądu
-private:
-	double CouplerDist(int Coupler);
 
 public:
 	TMoverParameters(double VelInitial, std::string TypeNameInit, std::string NameInit, int Cab);
 	// obsługa sprzęgów
-	double Distance(const TLocation &Loc1, const TLocation &Loc2, const TDimension &Dim1, const TDimension &Dim2);
-/*	double Distance(const vector3 &Loc1, const vector3 &Loc2, const vector3 &Dim1, const vector3 &Dim2);
-*/	//bool AttachA(int ConnectNo, int ConnectToNr, TMoverParameters *ConnectTo, int CouplingType, bool Forced = false);
+    static double CouplerDist( TMoverParameters const *Left, TMoverParameters const *Right );
+    static double Distance(const TLocation &Loc1, const TLocation &Loc2, const TDimension &Dim1, const TDimension &Dim2);
 	bool Attach(int ConnectNo, int ConnectToNr, TMoverParameters *ConnectTo, int CouplingType, bool Forced = false, bool Audible = true);
 	int DettachStatus(int ConnectNo);
 	bool Dettach(int ConnectNo);
-	void SetCoupleDist();
 	bool DirectionForward();
 	void BrakeLevelSet(double b);
 	bool BrakeLevelAdd(double b);
@@ -1340,7 +1377,7 @@ public:
 
 	// Q *******************************************************************************************
 	double GetTrainsetVoltage(void);
-	bool Physic_ReActivation(void);
+	bool switch_physics(bool const State);
 	double LocalBrakeRatio(void);
 	double ManualBrakeRatio(void);
 	double PipeRatio(void);/*ile napelniac*/
@@ -1372,8 +1409,7 @@ public:
     bool Sandbox( bool const State, range_t const Notify = range_t::consist );/*wlacza/wylacza sypanie piasku*/
 
 						  /*! zbijanie czuwaka/SHP*/
-	void SSReset(void);
-	bool SecuritySystemReset(void);
+	void SecuritySystemReset(void);
 	void SecuritySystemCheck(double dt);
 
 	bool BatterySwitch(bool State);
@@ -1412,17 +1448,17 @@ public:
 	/*funkcje obliczajace sily*/
 	void ComputeConstans(void);//ABu: wczesniejsze wyznaczenie stalych dla liczenia sil
 	double ComputeMass(void);
-	void ComputeTotalForce(double dt, double dt1, bool FullVer);
+	void ComputeTotalForce(double dt);
 	double Adhesive(double staticfriction) const;
 	double TractionForce(double dt);
 	double FrictionForce(double R, int TDamage);
 	double BrakeForceR(double ratio, double velocity);
 	double BrakeForceP(double press, double velocity);
 	double BrakeForce(const TTrackParam &Track);
-	double CouplerForce(int CouplerN, double dt);
+	double CouplerForce(int const End, double dt);
 	void CollisionDetect(int CouplerN, double dt);
 	/*obrot kol uwzgledniajacy poslizg*/
-	double ComputeRotatingWheel(double WForce, double dt, double n);
+	double ComputeRotatingWheel(double WForce, double dt, double n) const;
 
 	/*--funkcje dla lokomotyw*/
 	bool DirectionBackward(void);/*! kierunek ruchu*/
@@ -1476,6 +1512,9 @@ public:
     bool PantFront( bool const State, range_t const Notify = range_t::consist ); //obsluga pantografou przedniego
     bool PantRear( bool const State, range_t const Notify = range_t::consist ); //obsluga pantografu tylnego
 
+	void CheckEIMIC(double dt); //sprawdzenie i zmiana nastawy zintegrowanego nastawnika jazdy/hamowania
+	void CheckSpeedCtrl();
+
 							   /*-funkcje typowe dla lokomotywy spalinowej z przekladnia mechaniczna*/
 	bool dizel_EngageSwitch(double state);
 	bool dizel_EngageChange(double dt);
@@ -1492,6 +1531,7 @@ public:
 	bool LoadingDone(double LSpeed, std::string const &Loadname);
     bool PermitDoors( side const Door, bool const State = true, range_t const Notify = range_t::consist );
     bool ChangeDoorPermitPreset( int const Change, range_t const Notify = range_t::consist );
+    bool PermitDoorStep( bool const State, range_t const Notify = range_t::consist );
     bool OperateDoors( side const Door, bool const State, range_t const Notify = range_t::consist );
     bool LockDoors( bool const State, range_t const Notify = range_t::consist );
     bool signal_departure( bool const State, range_t const Notify = range_t::consist ); // toggles departure warning
@@ -1515,8 +1555,8 @@ private:
     void LoadFIZ_TurboPos( std::string const &line );
     void LoadFIZ_Cntrl( std::string const &line );
 	void LoadFIZ_Blending(std::string const &line);
+	void LoadFIZ_DCEMUED(std::string const &line);
     void LoadFIZ_Light( std::string const &line );
-    void LoadFIZ_Security( std::string const &line );
     void LoadFIZ_Clima( std::string const &line );
     void LoadFIZ_Power( std::string const &Line );
     void LoadFIZ_Engine( std::string const &Input );

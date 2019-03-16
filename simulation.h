@@ -38,6 +38,9 @@ public:
 	// process input commands
 	void
 	    process_commands();
+	// create model from node string
+	TAnimModel *
+	    create_model(const std::string &src, const std::string &name, const glm::dvec3 &position);
 
 private:
 // members

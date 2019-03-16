@@ -960,7 +960,11 @@ whois_event::run_() {
                         1 :
                         0, // 1, gdy ma tu zatrzymanie
                     m_input.flags );
-                WriteLog( "Train detected: " + m_activator->Mechanik->TrainName() );
+                WriteLog(
+                    "Type: WhoIs (" + to_string( m_input.flags ) + ") - "
+                    + "[train: " + m_activator->Mechanik->TrainName() + "], "
+                    + "[stations left: " + to_string( m_activator->Mechanik->StationCount() - m_activator->Mechanik->StationIndex() ) + "], "
+                    + "[stop at next: " + ( m_activator->Mechanik->IsStop() ? "yes" : "no") + "]" );
             }
         }
     }
@@ -1291,8 +1295,8 @@ animation_event::init() {
     for( auto &target : m_targets ) {
         auto *targetmodel { static_cast<TAnimModel *>( std::get<scene::basic_node *>( target ) ) };
         if( targetmodel == nullptr ) { continue; }
-        auto *targetcontainer{ targetmodel->GetContainer( m_animationsubmodel ) };
-        if( targetcontainer == nullptr ) {
+		auto targetcontainer{ targetmodel->GetContainer( m_animationsubmodel ) };
+		if( !targetcontainer ) {
             m_ignored = true;
             ErrorLog( "Bad event: \"" + m_name + "\" (type: " + type() + ") can't find submodel " + m_animationsubmodel + " in model instance \"" + targetmodel->name() + "\"" );
             break;
@@ -1399,7 +1403,12 @@ animation_event::run_() {
 
     WriteLog( "Type: Animation" );
 	// animation modes target specific submodels
-	for( auto *targetcontainer : m_animationcontainers ) {
+	m_animationcontainers.remove_if([this](std::weak_ptr<TAnimContainer> ptr)
+	{
+		auto targetcontainer = ptr.lock();
+		if (!targetcontainer)
+			return true;
+
 		switch( m_animationtype ) {
 		    case 1: { // rotate
 			    targetcontainer->SetRotateAnim(
@@ -1418,7 +1427,8 @@ animation_event::run_() {
 			    break;
 		    }
 		}
-	}
+		return false;
+	});
 }
 
 // export_as_text() subclass details

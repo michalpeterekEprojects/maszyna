@@ -1101,7 +1101,7 @@ bool TTrack::InMovement()
                 if (!SwitchExtension->CurrentIndex)
                     return false; // 0=zablokowana się nie animuje
                 // trzeba każdorazowo porównywać z kątem modelu
-                TAnimContainer *ac = (
+				auto ac = (
                     SwitchExtension->pModel ?
                         SwitchExtension->pModel->GetContainer() :
                         nullptr );
@@ -1165,6 +1165,30 @@ void TTrack::get_map_active_switches(std::vector<gfx::geometrybank_handle> &hand
 		handles.push_back(SwitchExtension->map_geometry[0]);
 	else
 		handles.push_back(SwitchExtension->map_geometry[1]);
+}
+
+glm::vec3 TTrack::get_nearest_point(const glm::dvec3 &point) const
+{
+	if (eType == tt_Normal) {
+		return Segment->get_nearest_point(point);
+	}
+	else if (eType == tt_Switch) {
+		glm::vec3 nearest;
+		float min = std::numeric_limits<float>::max();
+
+		for (size_t i = 0; i < 2; i++) {
+			glm::dvec3 p = SwitchExtension->Segments[i]->get_nearest_point(point);
+			float dist2 = glm::distance2(p, point);
+			if  (dist2 < min) {
+				nearest = p;
+				min = dist2;
+			}
+		}
+
+		return nearest;
+	}
+
+	return glm::vec3(NAN);
 }
 
 // wypełnianie tablic VBO
@@ -1883,7 +1907,7 @@ TTrack * TTrack::RaAnimate()
             SwitchExtension->CurrentIndex) // 0=zablokowana się nie animuje
         { // trzeba każdorazowo porównywać z kątem modelu
             // //pobranie kąta z modelu
-            TAnimContainer *ac = (
+			auto ac = (
                 SwitchExtension->pModel ?
                     SwitchExtension->pModel->GetContainer() : // pobranie głównego submodelu
                     nullptr );

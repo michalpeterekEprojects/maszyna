@@ -56,6 +56,7 @@ state_serializer::deserialize_begin( std::string const &Scenariofile ) {
 	        std::string,
 	        deserializefunction> > functionlist = {
 	            { "area",        &state_serializer::deserialize_area },
+	            { "assignment",  &state_serializer::deserialize_assignment },
 	            { "atmo",        &state_serializer::deserialize_atmo },
 	            { "camera",      &state_serializer::deserialize_camera },
 	            { "config",      &state_serializer::deserialize_config },
@@ -140,6 +141,20 @@ state_serializer::deserialize_area( cParser &Input, scene::scratch_data &Scratch
         // bind the children with their parent
         auto *isolated { TIsolated::Find( token ) };
         isolated->parent( groupowner );
+    }
+}
+
+void
+state_serializer::deserialize_assignment( cParser &Input, scene::scratch_data &Scratchpad ) {
+
+    std::string token { Input.getToken<std::string>() };
+    while( ( false == token.empty() )
+        && ( token != "endassignment" ) ) {
+        // assignment is expected to come as string pairs: language id and the actual assignment enclosed in quotes to form a single token
+        auto assignment{ Input.getToken<std::string>() };
+        win1250_to_ascii( assignment );
+        Scratchpad.trainset.assignment.emplace( token, assignment );
+        token = Input.getToken<std::string>();
     }
 }
 
@@ -640,6 +655,11 @@ state_serializer::deserialize_endtrainset( cParser &Input, scene::scratch_data &
          && ( vehicle->Mechanik->Primary() ) ) {
             // primary driver will receive the timetable for this trainset
             Scratchpad.trainset.driver = vehicle;
+            // they'll also receive assignment data if there's any
+            auto const lookup { Scratchpad.trainset.assignment.find( Global.asLang ) };
+            if( lookup != Scratchpad.trainset.assignment.end() ) {
+                vehicle->Mechanik->assignment() = lookup->second;
+            }
         }
         if( vehicleindex > 0 ) {
             // from second vehicle on couple it with the previous one
@@ -956,7 +976,7 @@ state_serializer::transform( glm::dvec3 Location, scene::scratch_data const &Scr
 
 // stores class data in specified file, in legacy (text) format
 void
-state_serializer::export_as_text( std::string const &Scenariofile ) const {
+state_serializer::export_as_text(std::string const &Scenariofile) const {
 
     if( Scenariofile == "$.scn" ) {
         ErrorLog( "Bad file: scenery export not supported for file \"$.scn\"" );
@@ -965,64 +985,104 @@ state_serializer::export_as_text( std::string const &Scenariofile ) const {
         WriteLog( "Scenery data export in progress..." );
     }
 
-    auto filename { Scenariofile };
-    while( filename[ 0 ] == '$' ) {
+	auto filename { Scenariofile };
+	while( filename[ 0 ] == '$' ) {
         // trim leading $ char rainsted utility may add to the base name for modified .scn files
-        filename.erase( 0, 1 );
+		filename.erase( 0, 1 );
     }
-    erase_extension( filename );
-    filename = Global.asCurrentSceneryPath + filename + "_export";
+	erase_extension( filename );
+	auto absfilename = Global.asCurrentSceneryPath + filename + "_export";
 
-    std::ofstream scmfile { filename + ".scm" };
-    // groups
-    scmfile << "// groups\n";
-    scene::Groups.export_as_text( scmfile );
-    // tracks
-    scmfile << "// paths\n";
-    for( auto const *path : Paths.sequence() ) {
-        if( path->group() == null_handle ) {
-            path->export_as_text( scmfile );
-        }
-    }
-    // traction
-    scmfile << "// traction\n";
-    for( auto const *traction : Traction.sequence() ) {
-        if( traction->group() == null_handle ) {
-            traction->export_as_text( scmfile );
-        }
-    }
-    // power grid
-    scmfile << "// traction power sources\n";
-    for( auto const *powersource : Powergrid.sequence() ) {
-        if( powersource->group() == null_handle ) {
-            powersource->export_as_text( scmfile );
-        }
-    }
-    // models
-    scmfile << "// instanced models\n";
-    for( auto const *instance : Instances.sequence() ) {
-        if( instance->group() == null_handle ) {
-            instance->export_as_text( scmfile );
-        }
-    }
-    // sounds
-    // NOTE: sounds currently aren't included in groups
-    scmfile << "// sounds\n";
-    Region->export_as_text( scmfile );
+	std::ofstream scmdirtyfile { absfilename + "_dirty.scm" };
+	export_nodes_to_stream(scmdirtyfile, true);
 
-    std::ofstream ctrfile { filename + ".ctr" };
-    // mem cells
-    ctrfile << "// memory cells\n";
-    for( auto const *memorycell : Memory.sequence() ) {
-        if( ( true == memorycell->is_exportable )
-         && ( memorycell->group() == null_handle ) ) {
-            memorycell->export_as_text( ctrfile );
-        }
-    }
-    // events
-    Events.export_as_text( ctrfile );
+	std::ofstream scmfile { absfilename + ".scm" };
+	export_nodes_to_stream(scmfile, false);
+
+	// sounds
+	// NOTE: sounds currently aren't included in groups
+	scmfile << "// sounds\n";
+	Region->export_as_text( scmfile );
+
+	scmfile << "// modified objects\ninclude " << filename << "_export_dirty.scm\n";
+
+	std::ofstream ctrfile { absfilename + ".ctr" };
+	// mem cells
+	ctrfile << "// memory cells\n";
+	for( auto const *memorycell : Memory.sequence() ) {
+		if( ( true == memorycell->is_exportable )
+		 && ( memorycell->group() == null_handle ) ) {
+			memorycell->export_as_text( ctrfile );
+		}
+	}
+
+	// events
+	Events.export_as_text( ctrfile );
 
     WriteLog( "Scenery data export done." );
+}
+
+TAnimModel *state_serializer::create_model(const std::string &src, const std::string &name, const glm::dvec3 &position) {
+	cParser parser(src);
+	parser.getTokens(); // "node"
+	parser.getTokens(2); // ranges
+
+	scene::node_data nodedata;
+	parser >> nodedata.range_max >> nodedata.range_min;
+
+	parser.getTokens(2); // name, type
+	nodedata.name = name;
+	nodedata.type = "model";
+
+	scene::scratch_data scratch;
+
+	TAnimModel *cloned = deserialize_model(parser, scratch, nodedata);
+
+	if (!cloned)
+		return nullptr;
+
+	cloned->mark_dirty();
+	cloned->location(position);
+	simulation::Instances.insert(cloned);
+	simulation::Region->insert(cloned);
+
+	return cloned;
+}
+
+void
+state_serializer::export_nodes_to_stream(std::ostream &scmfile, bool Dirty) const {
+	// groups
+	scmfile << "// groups\n";
+	scene::Groups.export_as_text( scmfile, Dirty );
+
+	// tracks
+	scmfile << "// paths\n";
+	for( auto const *path : Paths.sequence() ) {
+		if( path->dirty() == Dirty && path->group() == null_handle ) {
+			path->export_as_text( scmfile );
+		}
+	}
+	// traction
+	scmfile << "// traction\n";
+	for( auto const *traction : Traction.sequence() ) {
+		if( traction->dirty() == Dirty && traction->group() == null_handle ) {
+			traction->export_as_text( scmfile );
+		}
+	}
+	// power grid
+	scmfile << "// traction power sources\n";
+	for( auto const *powersource : Powergrid.sequence() ) {
+		if( powersource->dirty() == Dirty && powersource->group() == null_handle ) {
+			powersource->export_as_text( scmfile );
+		}
+	}
+	// models
+	scmfile << "// instanced models\n";
+	for( auto const *instance : Instances.sequence() ) {
+		if( instance && instance->dirty() == Dirty && instance->group() == null_handle ) {
+			instance->export_as_text( scmfile );
+		}
+	}
 }
 
 } // simulation

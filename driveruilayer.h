@@ -14,6 +14,7 @@ http://mozilla.org/MPL/2.0/.
 #include "command.h"
 
 #include "widgets/vehiclelist.h"
+#include "widgets/vehicleparams.h"
 #include "widgets/map.h"
 #include "widgets/time.h"
 
@@ -50,6 +51,7 @@ private:
 
 // members
     drivingaid_panel m_aidpanel { "Driving Aid", true };
+    scenario_panel m_scenariopanel { "Scenario", true };
     timetable_panel m_timetablepanel { "Timetable", false };
     debug_panel m_debugpanel { "Debug Data", false };
     transcripts_panel m_transcriptspanel { "Transcripts", true }; // voice transcripts
@@ -58,6 +60,7 @@ private:
 
 	command_relay m_relay;
 	ui::vehiclelist_panel m_vehiclelist;
+	ui::vehicleparams_panel m_vehicleparams;
 	ui::map_panel m_mappanel;
 	ui::time_panel m_timepanel;
 };

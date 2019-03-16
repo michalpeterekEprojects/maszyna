@@ -46,10 +46,12 @@ bounding_area::serialize( std::ostream &Output ) const {
 
 // restores content of the struct from provided input stream
 void
-bounding_area::deserialize( std::istream &Input ) {
+bounding_area::deserialize( std::istream &Input, bool const Preserveradius ) {
 
     center = sn_utils::d_dvec3( Input );
-	radius = std::max(radius, sn_utils::ld_float32( Input ));
+    radius = ( Preserveradius ?
+        std::max( radius, sn_utils::ld_float32( Input ) ) :
+        sn_utils::ld_float32( Input ) );
 }
 
 
@@ -743,7 +745,7 @@ basic_node::export_as_text( std::ostream &Output ) const {
         << ' ' << ( m_rangesquaredmax < std::numeric_limits<double>::max() ? std::sqrt( m_rangesquaredmax ) : -1 )
         << ' ' << std::sqrt( m_rangesquaredmin )
         // name
-        << ' ' << m_name << ' ';
+	    << ' ' << ((m_name.length() > 0) ? m_name : "none") << ' ';
     // template method implementation
     export_as_text_( Output );
 }

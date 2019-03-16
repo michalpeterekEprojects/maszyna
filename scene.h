@@ -53,6 +53,7 @@ struct scratch_data {
         std::vector<int> couplings;
         TDynamicObject * driver { nullptr };
         bool is_open { false };
+        std::unordered_map<std::string, std::string> assignment;
     } trainset;
 
     std::string name;
@@ -157,7 +158,7 @@ public:
 	    create_map_geometry(std::vector<gfx::basic_vertex> &Bank, const gfx::geometrybank_handle Extra);
 	void
 	    get_map_active_switches(std::vector<gfx::geometrybank_handle> &handles);
-	TTrack *find_nearest_track_point(const glm::dvec3 &pos);
+	glm::vec3 find_nearest_track_point(const glm::dvec3 &pos);
     // provides access to bounding area data
     bounding_area const &
         area() const {
@@ -291,8 +292,7 @@ public:
             return m_area; }
     const gfx::geometrybank_handle get_map_geometry()
 	    { return m_map_geometryhandle;}
-	TTrack* find_nearest_track_point(const glm::dvec3 &pos)
-	    { return cell(pos).find_nearest_track_point(pos); }
+	glm::vec3 find_nearest_track_point(const glm::dvec3 &point);
 
 private:
 // types
@@ -301,7 +301,7 @@ private:
 // methods
     // provides access to section enclosing specified point
     basic_cell &
-        cell( glm::dvec3 const &Location );
+	    cell(glm::dvec3 const &Location, const glm::ivec2 &offset = glm::ivec2(0));
 // members
     // placement and visibility
 
@@ -410,7 +410,7 @@ public:
 	    { return m_sections[section]; }
 	gfx::geometrybank_handle
 	    get_map_poi_geometry() { return m_map_poipoints; }
-	TTrack* find_nearest_track_point(const glm::dvec3 &pos)
+	glm::vec3 find_nearest_track_point(const glm::dvec3 &pos)
 	    { return section(pos).find_nearest_track_point(pos); }
 
 private:

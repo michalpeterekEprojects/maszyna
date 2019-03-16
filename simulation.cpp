@@ -175,6 +175,10 @@ void state_manager::process_commands() {
 	}
 }
 
+TAnimModel * state_manager::create_model(const std::string &src, const std::string &name, const glm::dvec3 &position) {
+	return m_serializer.create_model(src, name, position);
+}
+
 void
 state_manager::update_clocks() {
 

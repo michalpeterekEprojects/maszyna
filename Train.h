@@ -18,6 +18,8 @@ http://mozilla.org/MPL/2.0/.
 #include "command.h"
 #include "pythonscreenviewer.h"
 
+#undef snprintf // pyint.h->python
+
 // typedef enum {st_Off, st_Starting, st_On, st_ShuttingDown} T4State;
 
 const int maxcab = 2;
@@ -33,7 +35,7 @@ class TCab {
 public:
 // methods
     void Load(cParser &Parser);
-    void Update();
+    void Update( bool const Power );
     TGauge &Gauge( int n = -1 ); // pobranie adresu obiektu
     TButton &Button( int n = -1 ); // pobranie adresu obiektu
 // members
@@ -52,7 +54,7 @@ public:
 
 private:
 // members
-    std::vector<TGauge> ggList;
+    std::deque<TGauge> ggList; // need a container which doesn't invalidate references
     std::vector<TButton> btList;
 };
 
@@ -98,6 +100,8 @@ class TTrain
         float hv_voltage;
         std::array<float, 3> hv_current;
     };
+	typedef std::tuple<std::string, GLuint, std::unique_ptr<python_screen_viewer>> screen_entry;
+	typedef std::vector<screen_entry> screen_map;
 
 // methods
     bool CabChange(int iDirection);
@@ -151,12 +155,14 @@ class TTrain
     void update_sounds( double const Deltatime );
     void update_sounds_runningnoise( sound_source &Sound );
     void update_sounds_radio();
+	void update_screens();
 
     // command handlers
     // NOTE: we're currently using universal handlers and static handler map but it may be beneficial to have these implemented on individual class instance basis
     // TBD, TODO: consider this approach if we ever want to have customized consist behaviour to received commands, based on the consist/vehicle type or whatever
     static void OnCommand_aidriverenable( TTrain *Train, command_data const &Command );
     static void OnCommand_aidriverdisable( TTrain *Train, command_data const &Command );
+    static void OnCommand_jointcontrollerset( TTrain *Train, command_data const &Command );
     static void OnCommand_mastercontrollerincrease( TTrain *Train, command_data const &Command );
     static void OnCommand_mastercontrollerincreasefast( TTrain *Train, command_data const &Command );
     static void OnCommand_mastercontrollerdecrease( TTrain *Train, command_data const &Command );
@@ -168,6 +174,7 @@ class TTrain
     static void OnCommand_secondcontrollerdecreasefast( TTrain *Train, command_data const &Command );
     static void OnCommand_secondcontrollerset( TTrain *Train, command_data const &Command );
     static void OnCommand_notchingrelaytoggle( TTrain *Train, command_data const &Command );
+    static void OnCommand_tempomattoggle( TTrain *Train, command_data const &Command );
     static void OnCommand_mucurrentindicatorothersourceactivate( TTrain *Train, command_data const &Command );
     static void OnCommand_independentbrakeincrease( TTrain *Train, command_data const &Command );
     static void OnCommand_independentbrakeincreasefast( TTrain *Train, command_data const &Command );
@@ -264,6 +271,7 @@ class TTrain
     static void OnCommand_motorblowersenablerear( TTrain *Train, command_data const &Command );
     static void OnCommand_motorblowersdisablerear( TTrain *Train, command_data const &Command );
     static void OnCommand_motorblowersdisableall( TTrain *Train, command_data const &Command );
+    static void OnCommand_coolingfanstoggle( TTrain *Train, command_data const &Command );
     static void OnCommand_motorconnectorsopen( TTrain *Train, command_data const &Command );
     static void OnCommand_motorconnectorsclose( TTrain *Train, command_data const &Command );
     static void OnCommand_motordisconnect( TTrain *Train, command_data const &Command );
@@ -325,6 +333,7 @@ class TTrain
     static void OnCommand_doorcloseright( TTrain *Train, command_data const &Command );
     static void OnCommand_dooropenall( TTrain *Train, command_data const &Command );
     static void OnCommand_doorcloseall( TTrain *Train, command_data const &Command );
+    static void OnCommand_doorsteptoggle( TTrain *Train, command_data const &Command );
     static void OnCommand_carcouplingincrease( TTrain *Train, command_data const &Command );
     static void OnCommand_carcouplingdisconnect( TTrain *Train, command_data const &Command );
     static void OnCommand_departureannounce( TTrain *Train, command_data const &Command );
@@ -377,10 +386,11 @@ public: // reszta może by?publiczna
     TGauge ggWater1TempB;
 
     // McZapkie: definicje regulatorow
+    TGauge ggJointCtrl;
     TGauge ggMainCtrl;
     TGauge ggMainCtrlAct;
     TGauge ggScndCtrl;
-    TGauge ggScndCtrlButton; // NOTE: not used?
+    TGauge ggScndCtrlButton;
     TGauge ggDirKey;
     TGauge ggBrakeCtrl;
     TGauge ggLocalBrake;
@@ -632,10 +642,7 @@ private:
     float fHaslerTimer;
     float fConverterTimer; // hunter-261211: dla przekaznika
     float fMainRelayTimer; // hunter-141211: zalaczanie WSa z opoznieniem
-    float fCzuwakTestTimer; // hunter-091012: do testu czuwaka
     float fScreenTimer { 0.f };
-
-    bool CAflag { false }; // hunter-131211: dla osobnego zbijania CA i SHP
 
     // McZapkie-240302 - przyda sie do tachometru
     float fTachoVelocity{ 0.0f };
@@ -646,7 +653,7 @@ private:
     float fHCurrent[ 4 ] = { 0.0f, 0.0f, 0.0f, 0.0f }; // pr?dy: suma i amperomierze 1,2,3
     float fEngine[ 4 ] = { 0.0f, 0.0f, 0.0f, 0.0f }; // obroty te? trzeba pobra?
     int iCarNo, iPowerNo, iUnitNo; // liczba pojazdow, czlonow napednych i jednostek spiętych ze sobą
-    bool bDoors[20][3]; // drzwi dla wszystkich czlonow
+    bool bDoors[20][5]; // drzwi dla wszystkich czlonow; left+right, left, right, step_left, step_right
     int iUnits[20]; // numer jednostki
     int iDoorNo[20]; // liczba drzwi
     char cCode[20]; // kod pojazdu
@@ -665,7 +672,7 @@ private:
     bool m_mastercontrollerinuse { false };
     float m_mastercontrollerreturndelay { 0.f };
     int iRadioChannel { 1 }; // numer aktualnego kana?u radiowego
-	std::vector<std::tuple<std::string, GLuint, std::unique_ptr<python_screen_viewer>>> m_screens;
+	screen_map m_screens;
 	uint16_t vid { 0 };
 
   public:
@@ -686,6 +693,7 @@ private:
     // checks whether specified point is within boundaries of the active cab
     bool point_inside( Math3D::vector3 const Point ) const;
     Math3D::vector3 clamp_inside( Math3D::vector3 const &Point ) const;
+	const screen_map & get_screens();
 
 	float get_tacho();
 	float get_tank_pressure();
