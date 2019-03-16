@@ -5,6 +5,8 @@
 #include "Train.h"
 #include "parser.h"
 #include "Logs.h"
+#include "simulation.h"
+#include "Train.h"
 #include <exception>
 #include "utils/rapidjson/document.h"
 #include "utils/rapidjson/writer.h"
@@ -28,6 +30,21 @@ ethio::~ethio()
 {
 	this->isReceive = false;
 	WSACleanup();
+}
+
+void ethio::HookTrain(void *trainObj)
+{
+	if (trainObj != nullptr)
+	{
+		__hook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnInteriorlightChangedEventHandler);
+		this->ActualConnectTrain = trainObj;
+	}
+}
+
+void ethio::UnHookTrain( void )
+{
+	if (this->ActualConnectTrain != nullptr)
+		__unhook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnInteriorlightChangedEventHandler);
 }
 
 int ethio::Connect()
@@ -360,6 +377,38 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::pantographtogglefront, 0, 0, GLFW_RELEASE, 0);
 	}
+	else if (CMD == "independentbrakeincrease_push")
+	{
+		relay.post(user_command::independentbrakeincrease, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "independentbrakeincrease_release")
+	{
+		relay.post(user_command::independentbrakeincrease, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "independentbrakeincreasefast_push")
+	{
+		relay.post(user_command::independentbrakeincreasefast, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "independentbrakeincreasefast_release")
+	{
+		relay.post(user_command::independentbrakeincreasefast, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "independentbrakedecrease_push")
+	{
+		relay.post(user_command::independentbrakedecrease, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "independentbrakedecrease_release")
+	{
+		relay.post(user_command::independentbrakedecrease, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "independentbrakedecreasefast_push")
+	{
+		relay.post(user_command::independentbrakedecreasefast, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "independentbrakedecreasefast_release")
+	{
+		relay.post(user_command::independentbrakedecreasefast, 0, 0, GLFW_RELEASE, 0);
+	}
 	else
 	{
 		WriteLog("ETH : Unknown command - " + CMD);
@@ -385,5 +434,17 @@ int ethio::WriteCommand(std::string CMD, double Value)
 		else
 			relay.post(user_command::mastercontrollerset, Value, 0, GLFW_PRESS, 0);
 	}
+	else if (CMD == "independentbrakeset")
+	{
+		if (Value >= 0)
+			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
+		else
+			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
+	}
 	return 1;
+}
+
+void ethio::OnInteriorlightChangedEventHandler(int Action)
+{
+	WriteLog("Raised - OnInteriorlightChanged");
 }

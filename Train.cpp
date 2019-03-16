@@ -1668,6 +1668,12 @@ void TTrain::OnCommand_reverserforward( TTrain *Train, command_data const &Comma
                 && ( true == Train->mvOccupied->DirectionForward() ) ) {
                 // all work is done in the header
             }
+
+			if (Train->mvOccupied->DirectionForward() == true)
+			{
+				__raise Train->OnReverserChanged(0x01); // raise event
+			}
+
             // aktualizacja skrajnych pojazdów w składzie
             if( ( Train->mvOccupied->ActiveDir == 1 )
              && ( Train->DynamicObject->Mechanik ) ) {
@@ -1690,6 +1696,10 @@ void TTrain::OnCommand_reverserneutral( TTrain *Train, command_data const &Comma
             && ( true == Train->mvOccupied->DirectionBackward() ) ) {
             // all work is done in the header
         }
+		if (Train->mvOccupied->ActiveDir == 0)
+		{
+			__raise Train->OnReverserChanged(0x00); // raise event
+		}
     }
 }
 
@@ -1708,7 +1718,11 @@ void TTrain::OnCommand_reverserbackward( TTrain *Train, command_data const &Comm
              && ( Train->DynamicObject->Mechanik ) ) {
 
                 Train->DynamicObject->Mechanik->DirectionChange();
-            }
+			}
+			if (Train->mvOccupied->DirectionBackward() == true)
+			{
+				__raise Train->OnReverserChanged(-0x01); // raise event
+			}
         }
     }
 }
@@ -3930,6 +3944,7 @@ void TTrain::OnCommand_interiorlightenable( TTrain *Train, command_data const &C
         // visual feedback
         Train->ggCabLightButton.UpdateValue( 1.0, Train->dsbSwitch );
         Train->btCabLight.Turn( true );
+		__raise Train->OnInteriorlightChanged(0x01); // raise event
         // store lighting switch states
         if( false == Train->DynamicObject->JointCabs ) {
             // vehicles with separate cabs get separate lighting switch states
@@ -3956,6 +3971,7 @@ void TTrain::OnCommand_interiorlightdisable( TTrain *Train, command_data const &
         // visual feedback
         Train->ggCabLightButton.UpdateValue( 0.0, Train->dsbSwitch );
         Train->btCabLight.Turn( false );
+		__raise Train->OnInteriorlightChanged(0x00); // raise event
         // store lighting switch states
         if( false == Train->DynamicObject->JointCabs ) {
             // vehicles with separate cabs get separate lighting switch states

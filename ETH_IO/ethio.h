@@ -5,6 +5,10 @@
 #include <thread>
 #include "utils/rapidjson/document.h"
 #include <command.h>
+#include <stdio.h>
+//#include "Train.h"
+
+[event_receiver(native)]
 class ethio
 {
 	public:
@@ -17,8 +21,11 @@ class ethio
 
 		ethio();
 		~ethio();
-		int Connect();
-	    int StartReceive();
+		int Connect( void );
+	    int StartReceive( void );
+	    void *ActualConnectTrain;
+	    void HookTrain(void *trainObj);
+	    void UnHookTrain(void);
 	private:
 	    WSADATA wsaData;
 	    SOCKET Socket;
@@ -42,4 +49,8 @@ class ethio
 			VALUE
 		}e_JSON_NAMES;
 	    command_relay relay;
+
+		//Events Handlers
+
+		void OnInteriorlightChangedEventHandler(int Action);
 };

@@ -8,7 +8,7 @@ http://mozilla.org/MPL/2.0/.
 */
 
 #pragma once
-
+#include <stdio.h>
 #include <string>
 #include "DynObj.h"
 #include "Button.h"
@@ -70,6 +70,8 @@ public:
         find( TSubModel const *Control ) const;
 };
 
+// Michal Peterek 2019 Add train events
+[event_source(native)]
 class TTrain
 {
   public:
@@ -353,7 +355,6 @@ class TTrain
 	static void OnCommand_vehiclemovebackwards( TTrain *Train, command_data const &Command );
 	static void OnCommand_vehicleboost( TTrain *Train, command_data const &Command );
 
-
 // members
     TDynamicObject *DynamicObject { nullptr }; // przestawia zmiana pojazdu [F5]
     TMoverParameters *mvControlled { nullptr }; // człon, w którym sterujemy silnikiem
@@ -636,6 +637,11 @@ public: // reszta może by?publiczna
     Math3D::vector3 MirrorPosition( bool lewe );
     Math3D::vector3 pMechOffset; // base position of the driver in the cab
     glm::vec2 pMechViewAngle { 0.0, 0.0 }; // camera pitch and yaw values, preserved while in external view
+
+// Events by Michal Peterek
+	__event void OnInteriorlightChanged(int Action); // Actions : 0x00 - Turn off, 0x01 - Turn on
+	__event void OnReverserChanged(int Action); // Actions : -0x01 - Forward, 0x00 - neutral, 0x01 - forward
+	__event void OnInstrumentlightChanged(int Action);
 
 private:
     double fBlinkTimer;
