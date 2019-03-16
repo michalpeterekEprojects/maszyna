@@ -50,6 +50,9 @@ class ethio
 		}e_JSON_NAMES;
 	    command_relay relay;
 
+		//Socket config
+	    int SetSendTimeout(int ms);
+
 		//SendingFunctions
 	    int NetWrite(const char *Data, size_t Size);
 		int SendFrame(std::string FrameType, int Value);

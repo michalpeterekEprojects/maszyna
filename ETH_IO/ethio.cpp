@@ -65,6 +65,10 @@ int ethio::Connect()
 	service.sin_addr.s_addr = inet_addr(Global.ethio_conf.ControllerIP.c_str());
 	service.sin_port = htons(Global.ethio_conf.ControllerPort);
 
+	int Timeout = 2000; /* 30 Secs Timeout */
+
+	setsockopt(this->Socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&Timeout, sizeof(Timeout));
+
 	if (connect(this->Socket, (SOCKADDR *)&service, sizeof(service)) == SOCKET_ERROR)
 	{
 		WriteLog("ETH : Connection error.");
@@ -81,6 +85,11 @@ int ethio::Connect()
 	return 0;
 }
 
+int ethio::SetSendTimeout(int ms)
+{
+	return setsockopt(this->Socket, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(int));
+}
+
 int ethio::StartReceive()
 {
 	this->isReceive = true;
@@ -95,7 +104,6 @@ void ethio::ReceiveDataTask(ethio *Object)
 	char recvbuf[8192] = "";
 
 	int iResult = SOCKET_ERROR;
-
 	while (isReceive)
 	{
 		char *precbvuf = recvbuf;
@@ -107,9 +115,25 @@ void ethio::ReceiveDataTask(ethio *Object)
 			iResult = SOCKET_ERROR;
 			iResult = recv(this->Socket, precbvuf++, 1, 0);
 			if (iResult == SOCKET_ERROR)
-				break;
+			{
+				switch (WSAGetLastError())
+				{
+					case WSAETIMEDOUT:
+					{
+					    
+						WriteLog("ETH : Controller not responding!");
+						iResult = SOCKET_ERROR;
+					    goto Error;
+					}
+					break;
+
+					default:
+					    goto Error;
+				}
+			}
 			else
 			{
+				Global.iPause = 0;
 				bytesRecv += iResult;
 
 				if (*(precbvuf - 1) == '\n')
@@ -123,7 +147,7 @@ void ethio::ReceiveDataTask(ethio *Object)
 			}
 
 		} while (!FrameComplete);
-
+		Error:
 		if (iResult == SOCKET_ERROR)
 		{
 			WriteLog("ETH : Socket error!");
@@ -133,10 +157,10 @@ void ethio::ReceiveDataTask(ethio *Object)
 				Global.iPause = 1;
 				WriteLog("ETH : Try reconnect!");
 				Sleep(2000);
+				closesocket(this->Socket);
 				shutdown(this->Socket, SD_BOTH);
 				iReconnectResult = this->Connect();
 			} while (iReconnectResult != 1);
-			Global.iPause = 0;
 			continue;
 		}
 
@@ -198,6 +222,11 @@ int ethio::ParseDataFrame(rapidjson::Document *Value)
 		else if (Value->HasMember("CMD"))
 		{
 			iResult = this->WriteCommand((*Value)["CMD"].GetString());
+		}
+		else if (Value->HasMember("STATUS"))
+		{
+			//if ((*Value)["STATUS"].GetString() == "ok")
+				iResult = 1;
 		}
 
 	} while (0);
@@ -450,7 +479,7 @@ int ethio::WriteCommand(std::string CMD, double Value)
 
 int ethio::NetWrite(const char *Data, size_t Size)
 {
-	return send(this->Socket, Data, Size, 0);
+	return send(this->Socket, Data, static_cast<int>(Size), 0);
 }
 
 int ethio::SendFrame(std::string FrameType, int Value)
