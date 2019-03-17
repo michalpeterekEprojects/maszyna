@@ -678,10 +678,11 @@ global_settings::ConfigParse(cParser &Parser) {
 		else if ( token == "ethio" )
 		{
 			ethio_conf.enable = true;
-			Parser.getTokens(2, false);
+			Parser.getTokens(3, false);
 			Parser 
 				>> ethio_conf.ControllerIP 
-				>> ethio_conf.ControllerPort;
+				>> ethio_conf.ControllerPort
+				>> ethio_conf.ReceiveTimeout;
 		}
 		else if (token == "loadinglog") {
             Parser.getTokens( 1 );

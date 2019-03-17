@@ -38,6 +38,7 @@ void ethio::HookTrain(void *trainObj)
 	{
 		__hook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnInteriorlightChangedEventHandler);
 		__hook(&TTrain::OnReverserChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnReverserChangedEventHandler);
+		__hook(&TTrain::OnInstrumentlightChanged, reinterpret_cast<TTrain *>(trainObj), &ethio::OnInstrumentlightChangedEventHandler);
 		this->ActualConnectTrain = trainObj;
 	}
 }
@@ -48,6 +49,7 @@ void ethio::UnHookTrain( void )
 	{
 		__unhook(&TTrain::OnInteriorlightChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnInteriorlightChangedEventHandler);
 		__unhook(&TTrain::OnReverserChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnReverserChangedEventHandler);
+		__unhook(&TTrain::OnInstrumentlightChanged, reinterpret_cast<TTrain *>(this->ActualConnectTrain), &ethio::OnInstrumentlightChangedEventHandler);
 	}
 }
 
@@ -65,7 +67,7 @@ int ethio::Connect()
 	service.sin_addr.s_addr = inet_addr(Global.ethio_conf.ControllerIP.c_str());
 	service.sin_port = htons(Global.ethio_conf.ControllerPort);
 
-	int Timeout = 2000; /* 30 Secs Timeout */
+	int Timeout = Global.ethio_conf.ReceiveTimeout; /* Timeout */
 
 	setsockopt(this->Socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&Timeout, sizeof(Timeout));
 
@@ -442,6 +444,30 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::independentbrakedecreasefast, 0, 0, GLFW_RELEASE, 0);
 	}
+	else if (CMD == "cabsignalacknowledge_push")
+	{
+		relay.post(user_command::cabsignalacknowledge, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "cabsignalacknowledge_release")
+	{
+		relay.post(user_command::cabsignalacknowledge, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "secondcontrollerincrease_push")
+	{
+		relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "secondcontrollerincrease_release")
+	{
+		relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "secondcontrollerdecrease_push")
+	{
+		relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "secondcontrollerdecrease_release")
+	{
+		relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
+	}
 	else
 	{
 		WriteLog("ETH : Unknown command - " + CMD);
@@ -473,6 +499,20 @@ int ethio::WriteCommand(std::string CMD, double Value)
 			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
 		else
 			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "trainbrakeset")
+	{
+		if (Value >= 0)
+			relay.post(user_command::trainbrakeset, Value, 0, GLFW_PRESS, 0);
+		else
+			relay.post(user_command::trainbrakeset, Value, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "secondcontrollerset")
+	{
+		if (Value >= 0)
+			relay.post(user_command::secondcontrollerset, Value, 0, GLFW_PRESS, 0);
+		else
+			relay.post(user_command::secondcontrollerset, Value, 0, GLFW_PRESS, 0);
 	}
 	return 1;
 }

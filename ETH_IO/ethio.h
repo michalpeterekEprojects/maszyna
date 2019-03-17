@@ -17,6 +17,7 @@ class ethio
 			bool enable = false;
 			std::string ControllerIP;
 			int ControllerPort;
+		    int ReceiveTimeout;
 		};
 
 		ethio();
