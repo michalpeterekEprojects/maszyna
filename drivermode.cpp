@@ -96,18 +96,14 @@ bool driver_mode::drivermode_input::init()
 		if (EthernetIO != nullptr)
 		{
 			int iResult = 0;
-			do
+			iResult = EthernetIO->Connect();
+			iResult = EthernetIO->StartReceive();
+
+			if (!iResult)
 			{
-				if (iResult = EthernetIO->Connect())
-				{
-					EthernetIO->StartReceive();
-				}
-				else
-				{
-					WriteLog("ETH : Connect to module failed. Retry in 2sec..");
-					Sleep(2000);
-				}
-			} while (!iResult);
+				WriteLog("ETH : Error!");
+			}
+				
 		}
 	}
 

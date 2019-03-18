@@ -135,7 +135,11 @@ void ethio::ReceiveDataTask(ethio *Object)
 			}
 			else
 			{
-				Global.iPause = 0;
+				if (this->PausedByConnErr)
+				{
+					Global.iPause = 0;
+					this->PausedByConnErr = false;
+				}
 				bytesRecv += iResult;
 
 				if (*(precbvuf - 1) == '\n')
@@ -157,6 +161,7 @@ void ethio::ReceiveDataTask(ethio *Object)
 			do
 			{
 				Global.iPause = 1;
+				this->PausedByConnErr = true;
 				WriteLog("ETH : Try reconnect!");
 				Sleep(2000);
 				closesocket(this->Socket);
@@ -486,12 +491,63 @@ int ethio::WriteCommand(std::string CMD, int Value)
 int ethio::WriteCommand(std::string CMD, double Value)
 {
 	WriteLog("ETH : Command recv - " + CMD + "Value : " + std::to_string(Value));
-	if (CMD == "traxmastercontrollerset")
+	if (CMD == "mastercontrollerset") // This is emulate fizical controller ! Must be implemented somewhere else!
 	{
-		if (Value >= 0)
-			relay.post(user_command::mastercontrollerset, Value, 0, GLFW_PRESS, 0);
-		else
-			relay.post(user_command::mastercontrollerset, Value, 0, GLFW_PRESS, 0);
+		switch (static_cast<int>(Value))
+		{
+			case -3:
+			{
+			    relay.post(user_command::mastercontrollerset, 0, 0, GLFW_PRESS, 0);
+			    return 1;
+			}
+		    break;
+		    case -2:
+		    {
+			    relay.post(user_command::mastercontrollerset, 1, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case -1:
+		    {
+			    relay.post(user_command::mastercontrollerset, 2, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case 0:
+		    {
+			    relay.post(user_command::mastercontrollerset, 3, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case 1:
+		    {
+			    relay.post(user_command::mastercontrollerset, 4, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case 2:
+		    {
+			    relay.post(user_command::mastercontrollerset, 5, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case 3:
+		    {
+			    relay.post(user_command::mastercontrollerset, 6, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    case 4:
+		    {
+			    relay.post(user_command::mastercontrollerset, 7, 0, GLFW_PRESS, 0);
+			    return 1;
+		    }
+		    break;
+		    default:
+			    WriteLog("ETH : Bad mastercontroller Value!");
+			break;
+		}
+		
 	}
 	else if (CMD == "independentbrakeset")
 	{
@@ -499,20 +555,78 @@ int ethio::WriteCommand(std::string CMD, double Value)
 			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
 		else
 			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
+		return 1;
 	}
-	else if (CMD == "trainbrakeset")
+	else if (CMD == "trainbrakeset") // This is emulate fizical controller ! Must be implemented somewhere else!
 	{
-		if (Value >= 0)
-			relay.post(user_command::trainbrakeset, Value, 0, GLFW_PRESS, 0);
-		else
-			relay.post(user_command::trainbrakeset, Value, 0, GLFW_PRESS, 0);
+		switch (static_cast<int>(Value))
+		{
+			case -1:
+			{
+			    relay.post(user_command::trainbrakeset, 0.0, 0, GLFW_PRESS, 0);
+			}
+			break;
+			case 0:
+			{
+			    relay.post(user_command::trainbrakeset, 0.2, 0, GLFW_PRESS, 0);
+			}
+			break;
+			case 1:
+			{
+			    relay.post(user_command::trainbrakeset, 0.4, 0, GLFW_PRESS, 0);
+			}
+			break;
+			case 2:
+			{
+			    relay.post(user_command::trainbrakeset, 0.6, 0, GLFW_PRESS, 0);
+			}
+			break;
+			case 3:
+			{
+			    relay.post(user_command::trainbrakeset, 0.8, 0, GLFW_PRESS, 0);
+			}
+			break;
+			case 4:
+			{
+			    relay.post(user_command::trainbrakeset, 1.0, 0, GLFW_PRESS, 0);
+			}
+		    break;
+		    default:
+			    WriteLog("ETH : Bad trainbrake Value!");
+			    break;
+		}
 	}
-	else if (CMD == "secondcontrollerset")
+	else if (CMD == "secondcontrollerset") // This is emulate fizical controller ! Must be implemented somewhere else!
 	{
-		if (Value >= 0)
-			relay.post(user_command::secondcontrollerset, Value, 0, GLFW_PRESS, 0);
-		else
-			relay.post(user_command::secondcontrollerset, Value, 0, GLFW_PRESS, 0);
+		switch (static_cast<int>(Value))
+		{
+			case 0:
+			{
+			    relay.post(user_command::secondcontrollerset, 0.0, 0, GLFW_PRESS, 0);
+			}
+		    break;
+		    case 1:
+		    {
+			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_PRESS, 0);
+		    }
+		    break;
+		    case 2:
+		    {
+			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
+			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
+		    }
+		    break;
+		    case 3:
+		    {
+			    relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_PRESS, 0);
+		    }
+		    break;
+		    case 4:
+		    {
+			    relay.post(user_command::secondcontrollerset, 28.0, 0, GLFW_PRESS, 0);
+		    }
+		    break;
+		}
 	}
 	return 1;
 }
