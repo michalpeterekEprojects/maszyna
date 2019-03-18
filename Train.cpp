@@ -356,10 +356,9 @@ TTrain::commandhandler_map const TTrain::m_commandhandlers = {
     { user_command::generictoggle8, &TTrain::OnCommand_generictoggle },
     { user_command::generictoggle9, &TTrain::OnCommand_generictoggle },
 
-    {user_command::vehiclemove, &TTrain::OnCommand_vehiclemove},
-    {user_command::vehiclemoveforwards, &TTrain::OnCommand_vehiclemoveforwards},
-    {user_command::vehiclemovebackwards, &TTrain::OnCommand_vehiclemovebackwards},
-    {user_command::vehicleboost, &TTrain::OnCommand_vehicleboost},
+    { user_command::vehiclemoveforwards, &TTrain::OnCommand_vehiclemoveforwards },
+    { user_command::vehiclemovebackwards, &TTrain::OnCommand_vehiclemovebackwards },
+    { user_command::vehicleboost, &TTrain::OnCommand_vehicleboost },
 };
 
 std::vector<std::string> const TTrain::fPress_labels = {
@@ -5879,31 +5878,11 @@ void TTrain::OnCommand_cabchangebackward(TTrain *Train, command_data const &Comm
 	}
 }
 
-void TTrain::vehiclemove(float distance) {
-	TDynamicObject *d = DynamicObject;
-	while( d ) {
-		d->Move( distance * d->DirectionGet() );
-		d = d->Next(); // pozostałe też
-	}
-	d = DynamicObject->Prev();
-	while( d ) {
-		d->Move( distance * d->DirectionGet() );
-		d = d->Prev(); // w drugą stronę też
-	}
-}
-
-void TTrain::OnCommand_vehiclemove(TTrain *Train, const command_data &Command) {
-	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
-		return;
-
-	Train->vehiclemove(Command.param1);
-}
-
 void TTrain::OnCommand_vehiclemoveforwards(TTrain *Train, const command_data &Command) {
 	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
 		return;
 
-	Train->vehiclemove(100.0);
+	Train->DynamicObject->move_set(100.0);
 }
 
 void TTrain::OnCommand_vehiclemovebackwards(TTrain *Train, const command_data &Command)
@@ -5911,7 +5890,7 @@ void TTrain::OnCommand_vehiclemovebackwards(TTrain *Train, const command_data &C
 	if (Command.action == GLFW_RELEASE || !DebugModeFlag)
 		return;
 
-	Train->vehiclemove(-100.0);
+	Train->DynamicObject->move_set(-100.0);
 }
 
 void TTrain::OnCommand_vehicleboost(TTrain *Train, const command_data &Command)

@@ -228,7 +228,7 @@ int ethio::ParseDataFrame(rapidjson::Document *Value)
 		else if (Value->HasMember("STATUS"))
 		{
 			//if ((*Value)["STATUS"].GetString() == "ok")
-				iResult = 1;
+				return 1;
 		}
 
 	} while (0);

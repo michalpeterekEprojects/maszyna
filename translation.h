@@ -96,6 +96,8 @@ enum string {
 
 	map_straight,
 	map_divert,
+	map_open,
+	map_close,
 	map_obstacle_insert,
 	map_obstacle_remove,
 
@@ -104,6 +106,8 @@ enum string {
 	vehicleparams_window,
 	vehicleparams_radiostop,
 	vehicleparams_reset,
+	vehicleparams_move500f,
+	vehicleparams_move500b,
 
     cab_mainctrl,
     cab_jointctrl,

@@ -6,7 +6,7 @@
 #include "Train.h"
 
 ui::vehicleparams_panel::vehicleparams_panel(const std::string &vehicle)
-    : ui_panel(std::string(LOC_STR(vehicleparams_window)) + ": " + vehicle, false), m_vehicle_name(vehicle)
+    : ui_panel(std::string(locale::strings[locale::string::vehicleparams_window]) + ": " + vehicle, false), m_vehicle_name(vehicle)
 {
 
 }
@@ -186,9 +186,17 @@ void ui::vehicleparams_panel::render_contents()
 
 	if (ImGui::Button(LOC_STR(vehicleparams_radiostop)))
 		m_relay.post(user_command::radiostop, 0.0, 0.0, GLFW_PRESS, 0, vehicle_ptr->GetPosition());
-
 	ImGui::SameLine();
 
 	if (ImGui::Button(LOC_STR(vehicleparams_reset)))
 		m_relay.post(user_command::resettrainset, 0.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &vehicle_ptr->name());
+	ImGui::SameLine();
+
+	if (ImGui::Button(LOC_STR(vehicleparams_move500f)))
+		m_relay.post(user_command::dynamicmove, 500.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &vehicle_ptr->name());
+	ImGui::SameLine();
+
+	if (ImGui::Button(LOC_STR(vehicleparams_move500b)))
+		m_relay.post(user_command::dynamicmove, -500.0, 0.0, GLFW_PRESS, 0, glm::vec3(0.0f), &vehicle_ptr->name());
+	ImGui::SameLine();
 }
