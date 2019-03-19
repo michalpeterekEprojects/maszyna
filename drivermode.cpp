@@ -56,8 +56,8 @@ void driver_mode::drivermode_input::poll()
 		TTrain *t = simulation::Train;
 		if (t != EthernetIO->ActualConnectTrain)
 		{	
-			if (EthernetIO->ActualConnectTrain != nullptr)
-				EthernetIO->UnHookTrain();
+		/*	if (EthernetIO->ActualConnectTrain != nullptr)
+				EthernetIO->UnHookTrain();*/
 			if (t != nullptr)
 				EthernetIO->HookTrain(t);
 		}

@@ -473,6 +473,62 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
 	}
+	else if (CMD == "batteryenable")
+	{
+		relay.post(user_command::batteryenable, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "batterydisable")
+	{
+		relay.post(user_command::batterydisable, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "linebreakeropen_push")
+	{
+		relay.post(user_command::linebreakeropen, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "linebreakeropen_release")
+	{
+		relay.post(user_command::linebreakeropen, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "linebreakerclose_push")
+	{
+		relay.post(user_command::linebreakerclose, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "linebreakerclose_release")
+	{
+		relay.post(user_command::linebreakerclose, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "pantographraisefront_push")
+	{
+		relay.post(user_command::pantographraisefront, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "pantographraisefront_release")
+	{
+		relay.post(user_command::pantographraisefront, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "pantographraiserear_push")
+	{
+		relay.post(user_command::pantographraiserear, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "pantographraiserear_release")
+	{
+		relay.post(user_command::pantographraiserear, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "pantographlowerfront_push")
+	{
+		relay.post(user_command::pantographlowerfront, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "pantographlowerfront_release")
+	{
+		relay.post(user_command::pantographlowerfront, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "pantographlowerrear_push")
+	{
+		relay.post(user_command::pantographlowerrear, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "pantographlowerrear_release")
+	{
+		relay.post(user_command::pantographlowerrear, 0, 0, GLFW_RELEASE, 0);
+	}
 	else
 	{
 		WriteLog("ETH : Unknown command - " + CMD);
