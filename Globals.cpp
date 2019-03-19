@@ -75,10 +75,19 @@ global_settings::ConfigParse(cParser &Parser) {
         }
         else if (token == "heightbase")
         {
-
             Parser.getTokens(1, false);
             Parser >> fDistanceFactor;
         }
+		else if (token == "targetfps")
+		{
+			Parser.getTokens(1, false);
+			Parser >> targetfps;
+		}
+		else if (token == "basedrawrange")
+		{
+			Parser.getTokens(1);
+			Parser >> BaseDrawRange;
+		}
         else if (token == "fullscreen")
         {
             Parser.getTokens();
@@ -364,6 +373,10 @@ global_settings::ConfigParse(cParser &Parser) {
             Parser >> splinefidelity;
             SplineFidelity = clamp( splinefidelity, 1.f, 4.f );
         }
+		else if (token == "rendercab") {
+			Parser.getTokens();
+			Parser >> render_cab;
+		}
         else if( token == "createswitchtrackbeds" ) {
             // podwójna jasność ambient
             Parser.getTokens();
@@ -863,6 +876,7 @@ global_settings::ConfigParse(cParser &Parser) {
 
 			extraviewport_config conf;
 			Parser >> conf.monitor >> conf.width >> conf.height;
+			Parser >> conf.draw_range;
 			for (size_t i = 0; i < 16; i++)
 				Parser >> conf.transform[i / 4][i % 4];
 

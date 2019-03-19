@@ -105,7 +105,8 @@ struct global_settings {
     int iWindowWidth{ 800 };
     int iWindowHeight{ 600 };
 
-    float fDistanceFactor{ iWindowHeight / 768.f }; // baza do przeliczania odległości dla LoD
+	float fDistanceFactor{ 1.0f }; // baza do przeliczania odległości dla LoD
+	float targetfps { 0.0f };
     bool bFullScreen{ false };
     bool VSync{ false };
     bool bWireFrame{ false };
@@ -181,6 +182,7 @@ struct global_settings {
 	bool loading_log = true;
 	bool dds_upper_origin = false;
     bool captureonstart = true;
+	bool render_cab = true;
 
 	std::chrono::duration<float> minframetime {0.0f};
 
@@ -210,6 +212,7 @@ struct global_settings {
 		std::string monitor;
 		int width, height;
 		glm::mat4 transform;
+		float draw_range;
 	};
 	std::vector<extraviewport_config> extra_viewports;
 

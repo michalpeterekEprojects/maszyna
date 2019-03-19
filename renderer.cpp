@@ -166,6 +166,7 @@ bool opengl_renderer::Init(GLFWwindow *Window)
 	default_viewport.height = Global.gfx_framebuffer_height;
 	default_viewport.main = true;
 	default_viewport.window = m_window;
+	default_viewport.draw_range = 1.0f;
 
 	if (!init_viewport(default_viewport))
 		return false;
@@ -297,6 +298,7 @@ bool opengl_renderer::AddViewport(const global_settings::extraviewport_config &c
 	vp.height = conf.height;
 	vp.window = Application.window(-1, true, vp.width, vp.height, Application.find_monitor(conf.monitor));
 	vp.camera_transform = conf.transform;
+	vp.draw_range = conf.draw_range;
 
 	bool ret = init_viewport(vp);
 	glfwMakeContextCurrent(m_window);
@@ -1051,6 +1053,9 @@ void opengl_renderer::setup_pass(viewport_config &Viewport, renderpass_config &C
 		break;
 	}
 	}
+
+	Config.draw_range *= Viewport.draw_range;
+
 	// setup camera
 	auto &camera = Config.pass_camera;
 
@@ -2275,6 +2280,8 @@ bool opengl_renderer::Render(TDynamicObject *Dynamic)
 // rendering kabiny gdy jest oddzielnym modelem i ma byc wyswietlana
 bool opengl_renderer::Render_cab(TDynamicObject const *Dynamic, float const Lightlevel, bool const Alpha)
 {
+	if (!Global.render_cab)
+		return false;
 
 	if (Dynamic == nullptr)
 	{
@@ -3669,35 +3676,14 @@ void opengl_renderer::Update(double const Deltatime)
 	m_framerate = 1000.f / (Timer::subsystem.mainloop_total.average());
 
 	// adjust draw ranges etc, based on recent performance
-	auto const framerate = 1000.f / Timer::subsystem.gfx_color.average();
+	// TODO: it doesn't make much sense with vsync
 
-	float targetfactor;
-	if (framerate > 90.0)
-	{
-		targetfactor = 3.0f;
-	}
-	else if (framerate > 60.0)
-	{
-		targetfactor = 1.5f;
-	}
-	else if (framerate > 30.0)
-	{
-		targetfactor = 1.25;
-	}
-	else
-	{
-		targetfactor = std::max(Global.iWindowHeight / 768.f, 1.f);
-	}
-
-	if (targetfactor > Global.fDistanceFactor)
-	{
-
-		Global.fDistanceFactor = std::min(targetfactor, Global.fDistanceFactor + 0.05f);
-	}
-	else if (targetfactor < Global.fDistanceFactor)
-	{
-
-		Global.fDistanceFactor = std::max(targetfactor, Global.fDistanceFactor - 0.05f);
+	if (Global.targetfps != 0.0f) {
+		float fps_diff = Global.targetfps - m_framerate;
+		if (fps_diff > 0.0f)
+			Global.fDistanceFactor = std::max(0.5f, Global.fDistanceFactor - 0.05f);
+		else
+			Global.fDistanceFactor = std::min(3.0f, Global.fDistanceFactor + 0.05f);
 	}
 
 	if ((true == Global.ResourceSweep) && (true == simulation::is_ready))

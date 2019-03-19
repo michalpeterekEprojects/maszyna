@@ -64,8 +64,7 @@ void window_resize_callback( GLFWwindow *window, int w, int h ) {
     // NOTE: we have two variables which basically do the same thing as we don't have dynamic fullscreen toggle
     // TBD, TODO: merge them?
     Global.iWindowWidth = w;
-    Global.iWindowHeight = h;
-    Global.fDistanceFactor = std::max( 0.5f, h / 768.0f ); // not sure if this is really something we want to use
+	Global.iWindowHeight = h;
     glViewport( 0, 0, w, h );
 }
 
@@ -628,6 +627,8 @@ eu07_application::init_glfw() {
 	}
 
 	auto *monitor { find_monitor(Global.fullscreen_monitor) };
+	if (!monitor)
+		monitor = glfwGetPrimaryMonitor();
 
     glfwWindowHint(GLFW_SRGB_CAPABLE, !Global.gfx_shadergamma);
 
