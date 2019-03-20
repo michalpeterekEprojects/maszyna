@@ -529,6 +529,22 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::pantographlowerrear, 0, 0, GLFW_RELEASE, 0);
 	}
+	else if (CMD == "sandboxactivate_push")
+	{
+		relay.post(user_command::sandboxactivate, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "sandboxactivate_release")
+	{
+		relay.post(user_command::sandboxactivate, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "batterytogle_push")
+	{
+		relay.post(user_command::batterytoggle, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "batterytogle_release")
+	{
+		relay.post(user_command::batterytoggle, 0, 0, GLFW_RELEASE, 0);
+	}
 	else
 	{
 		WriteLog("ETH : Unknown command - " + CMD);
