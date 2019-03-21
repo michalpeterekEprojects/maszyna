@@ -200,6 +200,8 @@ TTrain::commandhandler_map const TTrain::m_commandhandlers = {
     { user_command::manualbrakeincrease, &TTrain::OnCommand_manualbrakeincrease },
     { user_command::manualbrakedecrease, &TTrain::OnCommand_manualbrakedecrease },
     { user_command::alarmchaintoggle, &TTrain::OnCommand_alarmchaintoggle },
+    { user_command::alarmchainenable, &TTrain::OnCommand_alarmchainenable },
+    { user_command::alarmchaindisable, &TTrain::OnCommand_alarmchaindisable},
     { user_command::wheelspinbrakeactivate, &TTrain::OnCommand_wheelspinbrakeactivate },
     { user_command::sandboxactivate, &TTrain::OnCommand_sandboxactivate },
     { user_command::epbrakecontroltoggle, &TTrain::OnCommand_epbrakecontroltoggle },
@@ -1474,18 +1476,30 @@ void TTrain::OnCommand_alarmchaintoggle(TTrain *Train, command_data const &Comma
 		if (false == Train->mvOccupied->AlarmChainFlag)
 		{
 			// pull
-			Train->mvOccupied->AlarmChainSwitch(true);
-			// visual feedback
-			Train->ggAlarmChain.UpdateValue(1.0);
+			OnCommand_alarmchainenable(Train, Command);
 		}
 		else
 		{
 			// release
-			Train->mvOccupied->AlarmChainSwitch(false);
-			// visual feedback
-			Train->ggAlarmChain.UpdateValue(0.0);
+			OnCommand_alarmchaindisable(Train, Command);
 		}
 	}
+}
+
+void TTrain::OnCommand_alarmchainenable(TTrain *Train, command_data const &Command)
+{
+	// pull
+	Train->mvOccupied->AlarmChainSwitch(true);
+	// visual feedback
+	Train->ggAlarmChain.UpdateValue(1.0);
+}
+
+void TTrain::OnCommand_alarmchaindisable(TTrain *Train, command_data const &Command)
+{
+	// release
+	Train->mvOccupied->AlarmChainSwitch(false);
+	// visual feedback
+	Train->ggAlarmChain.UpdateValue(0.0);
 }
 
 void TTrain::OnCommand_wheelspinbrakeactivate(TTrain *Train, command_data const &Command)

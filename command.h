@@ -52,6 +52,8 @@ enum class user_command {
     manualbrakeincrease,
     manualbrakedecrease,
     alarmchaintoggle,
+	alarmchainenable,
+	alarmchaindisable,
     wheelspinbrakeactivate,
     sandboxactivate,
     reverserincrease,

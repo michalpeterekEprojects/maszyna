@@ -353,13 +353,17 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::trainbrakerelease, 0, 0, GLFW_PRESS, 0);
 	}
-	else if (CMD == "independentbrakebailoff")
+	else if (CMD == "independentbrakebailoff_push")
 	{
 		relay.post(user_command::independentbrakebailoff, 0, 0, GLFW_PRESS, 0);
 	}
+	else if (CMD == "independentbrakebailoff_release")
+	{
+		relay.post(user_command::independentbrakebailoff, 0, 0, GLFW_RELEASE, 0);
+	}
 	else if (CMD == "manualbrakeincrease_push")
 	{
-		relay.post(user_command::linebreakertoggle, 0, 0, GLFW_PRESS, 0);
+		relay.post(user_command::manualbrakeincrease, 0, 0, GLFW_PRESS, 0);
 	}
 	else if (CMD == "manualbrakeincrease_release")
 	{
@@ -368,14 +372,17 @@ int ethio::WriteCommand(std::string CMD)
 	else if (CMD == "interiorlightenable")
 	{
 		relay.post(user_command::interiorlightenable, 0, 0, GLFW_PRESS, 0);
+		relay.post(user_command::interiorlightenable, 0, 0, GLFW_RELEASE, 0);
 	}
 	else if (CMD == "interiorlightdisable")
 	{
-		relay.post(user_command::interiorlightdisable, 0, 0, GLFW_PRESS, 0);
+		relay.post(user_command::interiorlightdimdisable, 0, 0, GLFW_PRESS, 0);
+		relay.post(user_command::interiorlightdimdisable, 0, 0, GLFW_RELEASE, 0);
 	}
 	else if (CMD == "instrumentlightenable")
 	{
 		relay.post(user_command::instrumentlightenable, 0, 0, GLFW_PRESS, 0);
+		relay.post(user_command::instrumentlightenable, 0, 0, GLFW_RELEASE, 0);
 	}
 	else if (CMD == "instrumentlightdisable")
 	{
@@ -537,13 +544,21 @@ int ethio::WriteCommand(std::string CMD)
 	{
 		relay.post(user_command::sandboxactivate, 0, 0, GLFW_RELEASE, 0);
 	}
-	else if (CMD == "batterytogle_push")
+	else if (CMD == "batterytoggle_push")
 	{
 		relay.post(user_command::batterytoggle, 0, 0, GLFW_PRESS, 0);
 	}
-	else if (CMD == "batterytogle_release")
+	else if (CMD == "batterytoggle_release")
 	{
 		relay.post(user_command::batterytoggle, 0, 0, GLFW_RELEASE, 0);
+	}
+	else if (CMD == "alarmchainenable")
+	{
+		relay.post(user_command::alarmchainenable, 0, 0, GLFW_PRESS, 0);
+	}
+	else if (CMD == "alarmchaindisable")
+	{
+		relay.post(user_command::alarmchaindisable, 0, 0, GLFW_PRESS, 0);
 	}
 	else
 	{
@@ -563,7 +578,7 @@ int ethio::WriteCommand(std::string CMD, int Value)
 int ethio::WriteCommand(std::string CMD, double Value)
 {
 	WriteLog("ETH : Command recv - " + CMD + "Value : " + std::to_string(Value));
-	if (CMD == "mastercontrollerset") // This is emulate fizical controller ! Must be implemented somewhere else!
+	if (CMD == "mastercontrollerset") // This is emulate phisical controller ! Must be implemented somewhere else!
 	{
 		switch (static_cast<int>(Value))
 		{
@@ -623,13 +638,14 @@ int ethio::WriteCommand(std::string CMD, double Value)
 	}
 	else if (CMD == "independentbrakeset")
 	{
-		if (Value >= 0)
+		//TODO: Peterku o co tu chodzi (zakomentowalem bo nie znalazlem sensu)
+//		if (Value >= 0)
 			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
-		else
-			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
-		return 1;
+//		else
+//			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
+//		return 1;
 	}
-	else if (CMD == "trainbrakeset") // This is emulate fizical controller ! Must be implemented somewhere else!
+	else if (CMD == "trainbrakeset") // This is emulate phisical controller ! Must be implemented somewhere else!
 	{
 		switch (static_cast<int>(Value))
 		{
@@ -668,7 +684,7 @@ int ethio::WriteCommand(std::string CMD, double Value)
 			    break;
 		}
 	}
-	else if (CMD == "secondcontrollerset") // This is emulate fizical controller ! Must be implemented somewhere else!
+	else if (CMD == "secondcontrollerset") // This is emulate phisical controller ! Must be implemented somewhere else!
 	{
 		switch (static_cast<int>(Value))
 		{
@@ -684,7 +700,7 @@ int ethio::WriteCommand(std::string CMD, double Value)
 		    break;
 		    case 2:
 		    {
-			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
+			    relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_RELEASE, 0);
 			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
 		    }
 		    break;
