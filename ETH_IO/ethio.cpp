@@ -232,8 +232,17 @@ int ethio::ParseDataFrame(rapidjson::Document *Value)
 		}
 		else if (Value->HasMember("STATUS"))
 		{
-			//if ((*Value)["STATUS"].GetString() == "ok")
-				return 1;
+			if (simulation::is_ready != this->simulationReady)
+			{
+				simulationReady = simulation::is_ready;
+				this->SendFrame("SimulationReady", simulationReady ? 1 : 0);
+			}
+			if (Global.iPause != this->simulationState)
+			{
+				this->simulationState = Global.iPause;
+				this->SendFrame("SimulationState", this->simulationState);
+			}
+			return 1;
 		}
 
 	} while (0);

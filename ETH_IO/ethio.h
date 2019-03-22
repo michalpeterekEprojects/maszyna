@@ -34,6 +34,8 @@ class ethio
 	    void ReceiveDataTask(ethio *Object);
 	    std::thread ReceiveThread;
 	    bool isReceive = false;
+	    bool simulationReady = false;
+	    int simulationState = false;
 	    int ProcessIncomingData(char *Data, size_t DataSize);
 	    int ParseDataFrame(rapidjson::Document * Value);
 	    int WriteCommand(std::string CMD);
