@@ -39,7 +39,7 @@ class ethio
 	    int ProcessIncomingData(char *Data, size_t DataSize);
 	    int ParseDataFrame(rapidjson::Document * Value);
 	    int WriteCommand(std::string CMD);
-	    int WriteCommand(std::string CMD, int Value);
+	    int WriteCommand(std::string CMD, int Value, int Type);
 	    int WriteCommand(std::string CMD, double Value);
 	    bool PausedByConnErr = false;
 	    const char *JSON_NAMES[2] = 

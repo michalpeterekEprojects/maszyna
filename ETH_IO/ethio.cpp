@@ -214,7 +214,18 @@ int ethio::ParseDataFrame(rapidjson::Document *Value)
 
 	do
 	{
-		if (Value->HasMember("CMD") && Value->HasMember("Value"))
+
+		if (Value->HasMember("CMD") && Value->HasMember("Value") && Value->HasMember("Type"))
+		{
+			if ((*Value)["Value"].IsInt())
+				iResult = this->WriteCommand((*Value)["CMD"].GetString(), (*Value)["Value"].GetInt(), (*Value)["Type"].GetInt());
+			else
+			{
+				WriteLog("ETH : Unknown arg Type!");
+				return 0;
+			}
+		}
+		else if(Value->HasMember("CMD") && Value->HasMember("Value"))
 		{
 			if ((*Value)["Value"].IsInt())
 				iResult = this->WriteCommand((*Value)["CMD"].GetString(), (*Value)["Value"].GetInt());
@@ -578,16 +589,100 @@ int ethio::WriteCommand(std::string CMD)
 	return 1;
 }
 
-int ethio::WriteCommand(std::string CMD, int Value)
+int ethio::WriteCommand(std::string CMD, int Value, int Type)
 {
 	WriteLog("ETH : Command recv - " + CMD + "Value : " + std::to_string(Value));
+	if (CMD == "radiobutton") // RadioButtons
+	{
+		switch (Value)
+		{
+			case 0:
+			{
+			    
+			}
+		    break;
+		    case 1:
+		    {
+
+		    }
+		    break;
+		    case 2:
+		    {
+
+		    }
+		    break;
+		    case 3:
+		    {
+
+		    }
+		    break;
+		    case 4:
+		    {
+			    if ( Type == 0)
+					relay.post(user_command::radiostoptest, 0, 0, GLFW_PRESS, 0);
+			    else	
+					relay.post(user_command::radiostoptest, 0, 0, GLFW_RELEASE, 0);
+		    }
+		    break;
+		    case 5:
+		    {
+
+		    }
+		    break;
+		    case 6:
+		    {
+
+		    }
+		    break;
+		    case 7:
+		    {
+
+		    }
+		    break;
+		    case 8:
+		    {
+
+		    }
+		    break;
+		    case 9:
+		    {
+
+		    }
+		    break;
+		    case 10:
+		    {
+
+		    }
+		    break;
+		    case 11:
+		    {
+
+		    }
+		    break;
+		    case 12:
+		    {
+
+		    }
+		    break;
+		    case 13:
+		    {
+
+		    }
+		    break;
+		    case 14:
+		    {
+
+		    }
+		    break;
+		}
+	}
 	return 1;
 }
 
 int ethio::WriteCommand(std::string CMD, double Value)
 {
 	WriteLog("ETH : Command recv - " + CMD + "Value : " + std::to_string(Value));
-	if (CMD == "mastercontrollerset") // This is emulate phisical controller ! Must be implemented somewhere else!
+	if (CMD == "mastercontrollerset") 
 	{
 		switch (static_cast<int>(Value))
 		{
@@ -647,12 +742,7 @@ int ethio::WriteCommand(std::string CMD, double Value)
 	}
 	else if (CMD == "independentbrakeset")
 	{
-		//TODO: Peterku o co tu chodzi (zakomentowalem bo nie znalazlem sensu)
-//		if (Value >= 0)
-			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
-//		else
-//			relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
-//		return 1;
+		relay.post(user_command::independentbrakeset, Value, 0, GLFW_PRESS, 0);
 	}
 	else if (CMD == "trainbrakeset") // This is emulate phisical controller ! Must be implemented somewhere else!
 	{
@@ -704,23 +794,22 @@ int ethio::WriteCommand(std::string CMD, double Value)
 		    break;
 		    case 1:
 		    {
-			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_PRESS, 0);
+			    relay.post(user_command::secondcontrollerset, 1.0, 0, GLFW_PRESS, 0);
 		    }
 		    break;
 		    case 2:
 		    {
-			    relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_RELEASE, 0);
-			    relay.post(user_command::secondcontrollerdecrease, 0, 0, GLFW_RELEASE, 0);
+			    relay.post(user_command::secondcontrollerset, 2.0, 0, GLFW_PRESS, 0);
 		    }
 		    break;
 		    case 3:
 		    {
-			    relay.post(user_command::secondcontrollerincrease, 0, 0, GLFW_PRESS, 0);
+			    relay.post(user_command::secondcontrollerset, 3.0, 0, GLFW_PRESS, 0);
 		    }
 		    break;
 		    case 4:
 		    {
-			    relay.post(user_command::secondcontrollerset, 28.0, 0, GLFW_PRESS, 0);
+			    relay.post(user_command::secondcontrollerset, 4.0, 0, GLFW_PRESS, 0);
 		    }
 		    break;
 		}
