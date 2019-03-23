@@ -477,6 +477,7 @@ dictionary_source *TTrain::GetTrainState()
 	dict->insert("main_ctrl_actual_pos", mover->MainCtrlActualPos);
 	dict->insert("scndctrl_pos", mover->ScndCtrlPos);
 	dict->insert("scnd_ctrl_actual_pos", mover->ScndCtrlActualPos);
+	dict->insert( "new_speed", mover->NewSpeed);
 	// brakes
 	dict->insert("manual_brake", (mvOccupied->ManualBrakePos > 0));
 	bool const bEP = (mvControlled->LocHandle->GetCP() > 0.2) || (fEIMParams[0][2] > 0.01);
@@ -797,12 +798,13 @@ void TTrain::OnCommand_jointcontrollerset(TTrain *Train, command_data const &Com
 			Train->m_mastercontrollerinuse = true;
 			Train->mvOccupied->LocalBrakePosA = 0;
 		}
-		else
-		{
-			Train->mvOccupied->LocalBrakePosA = (clamp(1.0 - (Command.param1 * 2), 0.0, 1.0));
-			if (Train->mvControlled->MainCtrlPos > 0)
-			{
-				Train->set_master_controller(0);
+        else {
+            Train->mvOccupied->LocalBrakePosA = (
+                clamp(
+                    1.0 - ( Command.param1 * 2 ),
+                    0.0, 1.0 ) );
+            if( Train->mvControlled->MainCtrlPowerPos() > 0 ) {
+                Train->set_master_controller( Train->mvControlled->MainCtrlNoPowerPos() );
 			}
 		}
 	}
@@ -868,9 +870,9 @@ void TTrain::OnCommand_mastercontrollerdecrease(TTrain *Train, command_data cons
 	if (Command.action != GLFW_RELEASE)
 	{
 		// on press or hold
-		if ((Train->ggJointCtrl.SubModel != nullptr) && (Train->mvControlled->MainCtrlPos == 0))
-		{
-			OnCommand_independentbrakeincrease(Train, Command);
+        if( ( Train->ggJointCtrl.SubModel != nullptr )
+         && ( Train->mvControlled->IsMainCtrlNoPowerPos() ) ) {
+            OnCommand_independentbrakeincrease( Train, Command );
 		}
 		else
 		{
@@ -892,9 +894,9 @@ void TTrain::OnCommand_mastercontrollerdecreasefast(TTrain *Train, command_data 
 	if (Command.action != GLFW_RELEASE)
 	{
 		// on press or hold
-		if ((Train->ggJointCtrl.SubModel != nullptr) && (Train->mvControlled->MainCtrlPos == 0))
-		{
-			OnCommand_independentbrakeincreasefast(Train, Command);
+        if( ( Train->ggJointCtrl.SubModel != nullptr )
+         && ( Train->mvControlled->IsMainCtrlNoPowerPos() ) ) {
+            OnCommand_independentbrakeincreasefast( Train, Command );
 		}
 		else
 		{
@@ -6405,7 +6407,12 @@ bool TTrain::Update(double const Deltatime)
 			}
 			if (ggIgnitionKey.SubModel)
 			{
-				ggIgnitionKey.UpdateValue(mvControlled->dizel_startup);
+                ggIgnitionKey.UpdateValue(
+                    ( mvControlled->Mains )
+                 || ( mvControlled->dizel_startup )
+                 || ( fMainRelayTimer > 0.f )
+                 || ( ggMainButton.GetDesiredValue() > 0.95 )
+                 || ( ggMainOnButton.GetDesiredValue() > 0.95 ) );
 				ggIgnitionKey.Update();
 			}
 		}
@@ -6608,6 +6615,7 @@ bool TTrain::Update(double const Deltatime)
 			// others
 			btLampkaMalfunction.Turn(mvControlled->dizel_heat.PA);
 			btLampkaMotorBlowers.Turn((mvControlled->MotorBlowers[end::front].is_active) && (mvControlled->MotorBlowers[end::rear].is_active));
+            btLampkaCoolingFans.Turn( mvControlled->RventRot > 1.0 );
 			// universal devices state indicators
 			for (auto idx = 0; idx < btUniversals.size(); ++idx)
 			{
@@ -6670,6 +6678,7 @@ bool TTrain::Update(double const Deltatime)
 			// others
 			btLampkaMalfunction.Turn(false);
 			btLampkaMotorBlowers.Turn(false);
+            btLampkaCoolingFans.Turn( false );
 			// universal devices state indicators
 			for (auto &universal : btUniversals)
 			{
@@ -8382,6 +8391,7 @@ void TTrain::clear_cab_controls()
 	btLampkaMalfunction.Clear();
 	btLampkaMalfunctionB.Clear();
 	btLampkaMotorBlowers.Clear();
+    btLampkaCoolingFans.Clear();
 
 	ggLeftLightButton.Clear();
 	ggRightLightButton.Clear();
@@ -8612,95 +8622,98 @@ void TTrain::set_cab_controls(int const Cab)
 bool TTrain::initialize_button(cParser &Parser, std::string const &Label, int const Cabindex)
 {
 
-	std::unordered_map<std::string, TButton &> const lights = {{"i-maxft:", btLampkaMaxSila},
-	                                                           {"i-maxftt:", btLampkaPrzekrMaxSila},
-	                                                           {"i-radio:", btLampkaRadio},
-	                                                           {"i-radiostop:", btLampkaRadioStop},
-	                                                           {"i-manual_brake:", btLampkaHamulecReczny},
-	                                                           {"i-door_blocked:", btLampkaBlokadaDrzwi},
-	                                                           {"i-door_blockedoff:", btLampkaDoorLockOff},
-	                                                           {"i-slippery:", btLampkaPoslizg},
-	                                                           {"i-contactors:", btLampkaStyczn},
-	                                                           {"i-conv_ovld:", btLampkaNadmPrzetw},
-	                                                           {"i-converter:", btLampkaPrzetw},
-	                                                           {"i-converteroff:", btLampkaPrzetwOff},
-	                                                           {"i-converterb:", btLampkaPrzetwB},
-	                                                           {"i-converterboff:", btLampkaPrzetwBOff},
-	                                                           {"i-diff_relay:", btLampkaPrzekRozn},
-	                                                           {"i-diff_relay2:", btLampkaPrzekRoznPom},
-	                                                           {"i-motor_ovld:", btLampkaNadmSil},
-	                                                           {"i-train_controll:", btLampkaUkrotnienie},
-	                                                           {"i-brake_delay_r:", btLampkaHamPosp},
-	                                                           {"i-mainbreaker:", btLampkaWylSzybki},
-	                                                           {"i-mainbreakerb:", btLampkaWylSzybkiB},
-	                                                           {"i-mainbreakeroff:", btLampkaWylSzybkiOff},
-	                                                           {"i-mainbreakerboff:", btLampkaWylSzybkiBOff},
-	                                                           {"i-vent_ovld:", btLampkaNadmWent},
-	                                                           {"i-comp_ovld:", btLampkaNadmSpr},
-	                                                           {"i-resistors:", btLampkaOpory},
-	                                                           {"i-no_resistors:", btLampkaBezoporowa},
-	                                                           {"i-no_resistors_b:", btLampkaBezoporowaB},
-	                                                           {"i-highcurrent:", btLampkaWysRozr},
-	                                                           {"i-vent_trim:", btLampkaWentZaluzje},
-	                                                           {"i-motorblowers:", btLampkaMotorBlowers},
-	                                                           {"i-trainheating:", btLampkaOgrzewanieSkladu},
-	                                                           {"i-security_aware:", btLampkaCzuwaka},
-	                                                           {"i-security_cabsignal:", btLampkaSHP},
-	                                                           {"i-door_left:", btLampkaDoorLeft},
-	                                                           {"i-door_right:", btLampkaDoorRight},
-	                                                           {"i-doors:", btLampkaDoors},
-	                                                           {"i-departure_signal:", btLampkaDepartureSignal},
-	                                                           {"i-reserve:", btLampkaRezerwa},
-	                                                           {"i-scnd:", btLampkaBoczniki},
-	                                                           {"i-scnd1:", btLampkaBocznik1},
-	                                                           {"i-scnd2:", btLampkaBocznik2},
-	                                                           {"i-scnd3:", btLampkaBocznik3},
-	                                                           {"i-scnd4:", btLampkaBocznik4},
-	                                                           {"i-braking:", btLampkaHamienie},
-	                                                           {"i-brakingoff:", btLampkaBrakingOff},
-	                                                           {"i-dynamicbrake:", btLampkaED},
-	                                                           {"i-brakeprofileg:", btLampkaBrakeProfileG},
-	                                                           {"i-brakeprofilep:", btLampkaBrakeProfileP},
-	                                                           {"i-brakeprofiler:", btLampkaBrakeProfileR},
-	                                                           {"i-braking-ezt:", btLampkaHamowanie1zes},
-	                                                           {"i-braking-ezt2:", btLampkaHamowanie2zes},
-	                                                           {"i-compressor:", btLampkaSprezarka},
-	                                                           {"i-compressorb:", btLampkaSprezarkaB},
-	                                                           {"i-compressoroff:", btLampkaSprezarkaOff},
-	                                                           {"i-compressorboff:", btLampkaSprezarkaBOff},
-	                                                           {"i-fuelpumpoff:", btLampkaFuelPumpOff},
-	                                                           {"i-voltbrake:", btLampkaNapNastHam},
-	                                                           {"i-resistorsb:", btLampkaOporyB},
-	                                                           {"i-contactorsb:", btLampkaStycznB},
-	                                                           {"i-conv_ovldb:", btLampkaNadmPrzetwB},
-	                                                           {"i-hvoltageb:", btLampkaHVoltageB},
-	                                                           {"i-malfunction:", btLampkaMalfunction},
-	                                                           {"i-malfunctionb:", btLampkaMalfunctionB},
-	                                                           {"i-forward:", btLampkaForward},
-	                                                           {"i-backward:", btLampkaBackward},
-	                                                           {"i-upperlight:", btLampkaUpperLight},
-	                                                           {"i-leftlight:", btLampkaLeftLight},
-	                                                           {"i-rightlight:", btLampkaRightLight},
-	                                                           {"i-leftend:", btLampkaLeftEndLight},
-	                                                           {"i-rightend:", btLampkaRightEndLight},
-	                                                           {"i-rearupperlight:", btLampkaRearUpperLight},
-	                                                           {"i-rearleftlight:", btLampkaRearLeftLight},
-	                                                           {"i-rearrightlight:", btLampkaRearRightLight},
-	                                                           {"i-rearleftend:", btLampkaRearLeftEndLight},
-	                                                           {"i-rearrightend:", btLampkaRearRightEndLight},
-	                                                           {"i-dashboardlight:", btDashboardLight},
-	                                                           {"i-timetablelight:", btTimetableLight},
-	                                                           {"i-cablight:", btCabLight},
-	                                                           {"i-universal0:", btUniversals[0]},
-	                                                           {"i-universal1:", btUniversals[1]},
-	                                                           {"i-universal2:", btUniversals[2]},
-	                                                           {"i-universal3:", btUniversals[3]},
-	                                                           {"i-universal4:", btUniversals[4]},
-	                                                           {"i-universal5:", btUniversals[5]},
-	                                                           {"i-universal6:", btUniversals[6]},
-	                                                           {"i-universal7:", btUniversals[7]},
-	                                                           {"i-universal8:", btUniversals[8]},
-	                                                           {"i-universal9:", btUniversals[9]}};
+    std::unordered_map<std::string, TButton &> const lights = {
+        { "i-maxft:", btLampkaMaxSila },
+        { "i-maxftt:", btLampkaPrzekrMaxSila },
+        { "i-radio:", btLampkaRadio },
+        { "i-radiostop:", btLampkaRadioStop },
+        { "i-manual_brake:", btLampkaHamulecReczny },
+        { "i-door_blocked:", btLampkaBlokadaDrzwi },
+        { "i-door_blockedoff:", btLampkaDoorLockOff },
+        { "i-slippery:", btLampkaPoslizg },
+        { "i-contactors:", btLampkaStyczn },
+        { "i-conv_ovld:", btLampkaNadmPrzetw },
+        { "i-converter:", btLampkaPrzetw },
+        { "i-converteroff:", btLampkaPrzetwOff },
+        { "i-converterb:", btLampkaPrzetwB },
+        { "i-converterboff:", btLampkaPrzetwBOff },
+        { "i-diff_relay:", btLampkaPrzekRozn },
+        { "i-diff_relay2:", btLampkaPrzekRoznPom },
+        { "i-motor_ovld:", btLampkaNadmSil },
+        { "i-train_controll:", btLampkaUkrotnienie },
+        { "i-brake_delay_r:", btLampkaHamPosp },
+        { "i-mainbreaker:", btLampkaWylSzybki },
+        { "i-mainbreakerb:", btLampkaWylSzybkiB },
+        { "i-mainbreakeroff:", btLampkaWylSzybkiOff },
+        { "i-mainbreakerboff:", btLampkaWylSzybkiBOff },
+        { "i-vent_ovld:", btLampkaNadmWent },
+        { "i-comp_ovld:", btLampkaNadmSpr },
+        { "i-resistors:", btLampkaOpory },
+        { "i-no_resistors:", btLampkaBezoporowa },
+        { "i-no_resistors_b:", btLampkaBezoporowaB },
+        { "i-highcurrent:", btLampkaWysRozr },
+        { "i-vent_trim:", btLampkaWentZaluzje },
+        { "i-motorblowers:", btLampkaMotorBlowers },
+        { "i-coolingfans:", btLampkaCoolingFans },
+        { "i-trainheating:", btLampkaOgrzewanieSkladu },
+        { "i-security_aware:", btLampkaCzuwaka },
+        { "i-security_cabsignal:", btLampkaSHP },
+        { "i-door_left:", btLampkaDoorLeft },
+        { "i-door_right:", btLampkaDoorRight },
+        { "i-doors:", btLampkaDoors },
+        { "i-departure_signal:", btLampkaDepartureSignal },
+        { "i-reserve:", btLampkaRezerwa },
+        { "i-scnd:", btLampkaBoczniki },
+        { "i-scnd1:", btLampkaBocznik1 },
+        { "i-scnd2:", btLampkaBocznik2 },
+        { "i-scnd3:", btLampkaBocznik3 },
+        { "i-scnd4:", btLampkaBocznik4 },
+        { "i-braking:", btLampkaHamienie },
+        { "i-brakingoff:", btLampkaBrakingOff },
+        { "i-dynamicbrake:", btLampkaED },
+        { "i-brakeprofileg:", btLampkaBrakeProfileG },
+        { "i-brakeprofilep:", btLampkaBrakeProfileP },
+        { "i-brakeprofiler:", btLampkaBrakeProfileR },
+        { "i-braking-ezt:", btLampkaHamowanie1zes },
+        { "i-braking-ezt2:", btLampkaHamowanie2zes },
+        { "i-compressor:", btLampkaSprezarka },
+        { "i-compressorb:", btLampkaSprezarkaB },
+        { "i-compressoroff:", btLampkaSprezarkaOff },
+        { "i-compressorboff:", btLampkaSprezarkaBOff },
+        { "i-fuelpumpoff:", btLampkaFuelPumpOff },
+        { "i-voltbrake:", btLampkaNapNastHam },
+        { "i-resistorsb:", btLampkaOporyB },
+        { "i-contactorsb:", btLampkaStycznB },
+        { "i-conv_ovldb:", btLampkaNadmPrzetwB },
+        { "i-hvoltageb:", btLampkaHVoltageB },
+        { "i-malfunction:", btLampkaMalfunction },
+        { "i-malfunctionb:", btLampkaMalfunctionB },
+        { "i-forward:", btLampkaForward },
+        { "i-backward:", btLampkaBackward },
+        { "i-upperlight:", btLampkaUpperLight },
+        { "i-leftlight:", btLampkaLeftLight },
+        { "i-rightlight:", btLampkaRightLight },
+        { "i-leftend:", btLampkaLeftEndLight },
+        { "i-rightend:", btLampkaRightEndLight },
+        { "i-rearupperlight:", btLampkaRearUpperLight },
+        { "i-rearleftlight:", btLampkaRearLeftLight },
+        { "i-rearrightlight:", btLampkaRearRightLight },
+        { "i-rearleftend:", btLampkaRearLeftEndLight },
+        { "i-rearrightend:",  btLampkaRearRightEndLight },
+        { "i-dashboardlight:",  btDashboardLight },
+        { "i-timetablelight:",  btTimetableLight },
+        { "i-cablight:", btCabLight },
+        { "i-universal0:", btUniversals[ 0 ] },
+        { "i-universal1:", btUniversals[ 1 ] },
+        { "i-universal2:", btUniversals[ 2 ] },
+        { "i-universal3:", btUniversals[ 3 ] },
+        { "i-universal4:", btUniversals[ 4 ] },
+        { "i-universal5:", btUniversals[ 5 ] },
+        { "i-universal6:", btUniversals[ 6 ] },
+        { "i-universal7:", btUniversals[ 7 ] },
+        { "i-universal8:", btUniversals[ 8 ] },
+        { "i-universal9:", btUniversals[ 9 ] }
+    };
 	{
 		auto lookup = lights.find(Label);
 		if (lookup != lights.end())
