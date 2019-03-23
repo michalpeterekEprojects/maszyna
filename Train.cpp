@@ -499,6 +499,7 @@ dictionary_source *TTrain::GetTrainState()
 	dict->insert("pantpress", std::abs(mvControlled->PantPress));
 	dict->insert("universal3", InstrumentLightActive);
 	dict->insert("radio_channel", iRadioChannel);
+	dict->insert("radio_state", mvOccupied->Radio);
 	dict->insert("door_lock", mvOccupied->Doors.lock_enabled);
 	// movement data
 	dict->insert("velocity", std::abs(mover->Vel));
