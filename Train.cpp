@@ -1823,19 +1823,6 @@ void TTrain::OnCommand_reverserincrease(TTrain *Train, command_data const &Comma
 				Train->DynamicObject->Mechanik->DirectionChange();
 			}
 		}
-
-		if (Train->mvOccupied->ActiveDir > 0)
-		{
-			__raise Train->OnReverserChanged(0x01);
-		}
-		else if(Train->mvOccupied->ActiveDir < 0)
-		{
-			__raise Train->OnReverserChanged(-0x01);
-		}
-		else
-		{
-			__raise Train->OnReverserChanged(0x00);
-		}
 	}
 }
 
@@ -1854,18 +1841,6 @@ void TTrain::OnCommand_reverserdecrease(TTrain *Train, command_data const &Comma
 				Train->DynamicObject->Mechanik->DirectionChange();
 				;
 			}
-		}
-		if (Train->mvOccupied->ActiveDir > 0)
-		{
-			__raise Train->OnReverserChanged(0x01);
-		}
-		else if (Train->mvOccupied->ActiveDir < 0)
-		{
-			__raise Train->OnReverserChanged(-0x01);
-		}
-		else
-		{
-			__raise Train->OnReverserChanged(0x00);
 		}
 	}
 }
@@ -1905,8 +1880,18 @@ void TTrain::OnCommand_reverserforward(TTrain *Train, command_data const &Comman
 				Train->DynamicObject->Mechanik->DirectionChange();
 			}
 		}
-
-		__raise Train->OnReverserChanged(0x01); // raise event TODO : temp
+		if (Train->mvOccupied->ActiveDir > 0)
+		{
+			__raise Train->OnReverserChanged(0x01);
+		}
+		else if (Train->mvOccupied->ActiveDir < 0)
+		{
+			__raise Train->OnReverserChanged(-0x01);
+		}
+		else
+		{
+			__raise Train->OnReverserChanged(0x00);
+		}
 	}
 }
 
@@ -1916,8 +1901,6 @@ void TTrain::OnCommand_reverserneutral(TTrain *Train, command_data const &Comman
 	if (Command.action == GLFW_PRESS)
 	{
 
-		__raise Train->OnReverserChanged(-0x00); // raise event TODO : temp
-
 		while ((Train->mvOccupied->ActiveDir < 0) && (true == Train->mvOccupied->DirectionForward()))
 		{
 			// all work is done in the header
@@ -1925,6 +1908,18 @@ void TTrain::OnCommand_reverserneutral(TTrain *Train, command_data const &Comman
 		while ((Train->mvOccupied->ActiveDir > 0) && (true == Train->mvOccupied->DirectionBackward()))
 		{
 			// all work is done in the header
+		}
+		if (Train->mvOccupied->ActiveDir > 0)
+		{
+			__raise Train->OnReverserChanged(0x01);
+		}
+		else if (Train->mvOccupied->ActiveDir < 0)
+		{
+			__raise Train->OnReverserChanged(-0x01);
+		}
+		else
+		{
+			__raise Train->OnReverserChanged(0x00);
 		}
 	}
 }
@@ -1949,7 +1944,18 @@ void TTrain::OnCommand_reverserbackward(TTrain *Train, command_data const &Comma
 				Train->DynamicObject->Mechanik->DirectionChange();
 			}
 		}
-		__raise Train->OnReverserChanged(-0x01); // raise event TODO : temp
+		if (Train->mvOccupied->ActiveDir > 0)
+		{
+			__raise Train->OnReverserChanged(0x01);
+		}
+		else if (Train->mvOccupied->ActiveDir < 0)
+		{
+			__raise Train->OnReverserChanged(-0x01);
+		}
+		else
+		{
+			__raise Train->OnReverserChanged(0x00);
+		}
 	}
 }
 

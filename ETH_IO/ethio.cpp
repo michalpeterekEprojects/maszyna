@@ -387,7 +387,8 @@ int ethio::WriteCommand(std::string CMD)
 	}
 	else if (CMD == "manualbrakeincrease_release")
 	{
-		
+		relay.post(user_command::manualbrakeincrease, 0, 0, GLFW_RELEASE, 0);
+	}
 	else if (CMD == "manualbrakedecrease_push")
 	{
 		relay.post(user_command::manualbrakedecrease, 0, 0, GLFW_PRESS, 0);
