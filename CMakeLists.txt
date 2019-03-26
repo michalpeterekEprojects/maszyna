@@ -151,7 +151,8 @@ set(SOURCES
 "imgui/imgui_widgets.cpp"
 "imgui/imgui_impl_glfw.cpp"
 
-"ETH_IO/ethio.cpp"
+"eprojects/ethio.cpp"
+"eprojects/Camera.cpp"
 )
 
 option(USE_IMGUI_GL3 "Use OpenGL3+ imgui implementation" ON)

@@ -690,12 +690,19 @@ global_settings::ConfigParse(cParser &Parser) {
         }
 		else if ( token == "ethio" )
 		{
-			ethio_conf.enable = true;
-			Parser.getTokens(3, false);
+			CamRecorder_conf.enable = true;
+			Parser.getTokens(6, false);
 			Parser 
-				>> ethio_conf.ControllerIP 
-				>> ethio_conf.ControllerPort
-				>> ethio_conf.ReceiveTimeout;
+				>> CamRecorder_conf.CameraManagerIP
+				>> CamRecorder_conf.CameraManagerPort
+				>> CamRecorder_conf.FTP_ip 
+				>> CamRecorder_conf.FTP_dir 
+				>> CamRecorder_conf.FTP_User 
+				>> CamRecorder_conf.FTP_Password;
+		}
+		else if ( token == "CamRecorder" )
+		{
+
 		}
 		else if (token == "loadinglog") {
             Parser.getTokens( 1 );

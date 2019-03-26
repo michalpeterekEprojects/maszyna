@@ -18,7 +18,7 @@ http://mozilla.org/MPL/2.0/.
 #include "Console.h"
 #include "Camera.h"
 #include "Classes.h"
-#include "ETH_IO/ethio.h"
+#include "eprojects/ethio.h"
 
 class driver_mode : public application_mode {
 

@@ -15,10 +15,11 @@ http://mozilla.org/MPL/2.0/.
 #include "Float3d.h"
 #include "light.h"
 #include "uart.h"
-#include "ETH_IO/ethio.h"
+#include "eprojects/ethio.h"
 #include "utilities.h"
 #include "motiontelemetry.h"
 #include "version.h"
+#include "eprojects/Camera.h"
 
 struct global_settings {
 // members
@@ -172,6 +173,7 @@ struct global_settings {
     int iPoKeysPWM[ 7 ] = { 0, 1, 2, 3, 4, 5, 6 }; // numery wejść dla PWM
     uart_input::conf_t uart_conf;
 	ethio::conf_t ethio_conf;
+	CamRecorder::conf_t CamRecorder_conf;
     // multiplayer
     int iMultiplayer{ 0 }; // blokada działania niektórych eventów na rzecz kominikacji
     // other

@@ -1,6 +1,7 @@
 #include "uilayer.h"
+#include "eprojects/Camera.h"
 
-class trainingcard_panel : public ui_panel
+class trainingcard_panel : public ui_panel, public CamRecorder
 {
 	std::string place;
 	std::string trainee_name;
@@ -15,13 +16,13 @@ class trainingcard_panel : public ui_panel
 	void save_thread_func();
 	void clear();
 
-	virtual int StartRecording( void ) {
-		return 1;
-	}
-	virtual int EndRecording( std::string training_identifier ) {
-		std::this_thread::sleep_for(std::chrono::duration<float>(5.0f));
-		return 1;
-	}
+	//virtual int StartRecording( void ) {
+	//	return 1;
+	//}
+	//virtual int EndRecording( std::string training_identifier ) {
+	//	std::this_thread::sleep_for(std::chrono::duration<float>(5.0f));
+	//	return 1;
+	//}
 
   public:
 	trainingcard_panel();
