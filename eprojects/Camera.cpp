@@ -14,25 +14,53 @@ CamRecorder::CamRecorder()
 
 CamRecorder::~CamRecorder()
 {
-
+	closesocket(this->Socket);
+	shutdown(this->Socket, SD_BOTH);
 }
 
 int CamRecorder::StartRecording( void )
 {
-	return 0;
+	int iResult = 0;
+	do
+	{
+		iResult = this->SendStartRecoringCMD();
+		if (iResult != 1)
+			break;
+		iResult = this->WaitForStartCMDResponse();
+	} while (0);
+		
+	return iResult;
 }
 
 int CamRecorder::EndRecording( std::string training_identifier ) {
+	int iResult = 0;
 
-	return 0;
+	for (int chno = 0; chno < training_identifier.length(); chno++)
+	{
+		if (training_identifier[chno] == ' ')
+			training_identifier[chno] = '_';
+	}
+
+	char Ftp_Dir[128];
+	memset(Ftp_Dir, 0x00, sizeof(Ftp_Dir));
+	snprintf(Ftp_Dir, (sizeof(Ftp_Dir) - 1), "ftp://%s/%s/%s.avi", Global.CamRecorder_conf.FTP_ip.c_str(), Global.CamRecorder_conf.FTP_dir.c_str(), training_identifier.c_str());
+
+	do
+	{
+		iResult = this->SendStopRecoringCMD(Ftp_Dir, Global.CamRecorder_conf.FTP_User, Global.CamRecorder_conf.FTP_Password);
+		iResult = this->WaitForEndCMDResponse();
+	} while (0);
+
+
+	return iResult;
 }
 
-void CamRecorder::ReceiveDataTask(CamRecorder *Object)
+int CamRecorder::ReceiveData(rapidjson::Document * ReceivedData)
 {
 	char recvbuf[8192] = "";
 
 	int iResult = SOCKET_ERROR;
-	while (isReceive)
+	while (1)
 	{
 		char *precbvuf = recvbuf;
 		int bytesRecv = 0;
@@ -42,30 +70,43 @@ void CamRecorder::ReceiveDataTask(CamRecorder *Object)
 		{
 			iResult = SOCKET_ERROR;
 			iResult = recv(this->Socket, precbvuf++, 1, 0);
-		} while (!FrameComplete);
-		if (iResult == SOCKET_ERROR)
-		{
-			WriteLog("CamRecorder : Socket error!");
-			int iReconnectResult = 0;
-			do
+
+			if (*(precbvuf - 1) == '\n')
 			{
-				WriteLog("CamRecorder : Try reconnect!");
-				Sleep(2000);
-				closesocket(this->Socket);
-				shutdown(this->Socket, SD_BOTH);
-				iReconnectResult = this->Connect();
-			} while (iReconnectResult != 1);
-			continue;
-		}
+				*(precbvuf - 1) = 0x00;
+				*(precbvuf - 2) = 0x00;
+				bytesRecv -= 2;
+				WriteLog("CamRecorder : Data RECV : ");
+				WriteLog(recvbuf);
+				FrameComplete = true;
+				break;
+			}
+			if (iResult == SOCKET_ERROR)
+			{
+				WriteLog("CamRecorder : Socket error!");
+				int iReconnectResult = 0;
+				do
+				{
+					WriteLog("CamRecorder : Try reconnect!");
+					Sleep(2000);
+					closesocket(this->Socket);
+					shutdown(this->Socket, SD_BOTH);
+					iReconnectResult = this->Connect();
+				} while (iReconnectResult != 1);
+				continue;
+			}
+		} while (!FrameComplete);
 
 
-		if (this->ProcessIncomingData(recvbuf, static_cast<size_t>(bytesRecv)))
+		if (this->ProcessIncomingData(recvbuf, static_cast<size_t>(bytesRecv), ReceivedData))
 		{
-			// WriteLog("ETH : Parse OK!");
+			WriteLog("CamRecorder : Parse OK!");
+			return 1;
 		}
 		else
 		{
 			WriteLog("CamRecorder : Parse ERR!");
+			return 0;
 		}
 	}
 }
@@ -92,7 +133,7 @@ int CamRecorder::Connect()
 	if (connect(this->Socket, (SOCKADDR *)&service, sizeof(service)) == SOCKET_ERROR)
 	{
 		WriteLog("CamRecorder : Connection error.");
-		WriteLog("CamRecorder : Connection details : Host - " + Global.ethio_conf.ControllerIP + " Port - " + to_string(Global.ethio_conf.ControllerPort));
+		WriteLog("CamRecorder : Connection details : Host - " + Global.CamRecorder_conf.CameraManagerIP + " Port - " + to_string(Global.CamRecorder_conf.CameraManagerPort));
 		// WSACleanup();
 		return -1;
 	}
@@ -190,6 +231,97 @@ int CamRecorder::SendStopRecoringCMD( std::string ftp_url, std::string ftp_user,
 
 		iResult = 1;
 	} while (0);
+
+	return iResult;
+}
+
+int CamRecorder::ProcessIncomingData(char *Data, size_t DataSize, rapidjson::Document * ResponseData)
+{
+	//ResponseData  = new rapidjson::Document();
+
+	do
+	{
+		ResponseData->Parse(Data, DataSize);
+
+		if (ResponseData->Capacity() == 0)
+			break;
+		else
+		{
+			return 1;
+		}
+	} while (0);
+	//delete ResponseData;
+	return 0; //
+}
+
+int CamRecorder::WaitForStartCMDResponse(void) {
+	
+	int iResult = 0;
+	rapidjson::Document JsonObject;
+	do
+	{
+		iResult = ReceiveData(&JsonObject);
+		if (iResult != 1)
+			break;
+		if (JsonObject.HasMember("Status"))
+		{
+			if (JsonObject["Status"].GetBool())
+			{
+				iResult = 1;
+			}
+			else
+			{
+				WriteLog("CamRecorder : Failed to start recording!");
+				iResult = 0;
+			}
+
+			if (JsonObject.HasMember("Message"))
+				WriteLog(JsonObject["Message"].GetString());
+		}
+		else
+		{
+			WriteLog("CamRecorder : Bad frame!");
+			iResult = 0;
+			break;
+		}
+	} while (0);
+	
+	return iResult;
+}
+
+int CamRecorder::WaitForEndCMDResponse(void)
+{
+	int iResult = 0;
+	int ResponseCount = 1;
+	rapidjson::Document JsonObject;
+	do
+	{
+		iResult = ReceiveData(&JsonObject);
+		if (iResult != 1)
+			break;
+		if (JsonObject.HasMember("Status"))
+		{
+			if (JsonObject["Status"].GetBool())
+			{
+				iResult = 1;
+			}
+			else
+			{
+				WriteLog("CamRecorder : Failed to end recording!");
+				iResult = 0;
+				break;
+			}
+
+			if (JsonObject.HasMember("Message"))
+				WriteLog(JsonObject["Message"].GetString());
+		}
+		else
+		{
+			WriteLog("CamRecorder : Bad frame!");
+			iResult = 0;
+			break;
+		}
+	} while (ResponseCount--);
 
 	return iResult;
 }
