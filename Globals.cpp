@@ -835,6 +835,11 @@ global_settings::ConfigParse(cParser &Parser) {
 			Parser.getTokens(1);
 			Parser >> python_sharectx;
 		}
+		else if (token == "python.uploadmain")
+		{
+			Parser.getTokens(1);
+			Parser >> python_uploadmain;
+		}
 		else if (token == "python.fpslimit")
 		{
 			Parser.getTokens(1);

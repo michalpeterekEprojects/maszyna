@@ -96,7 +96,7 @@ void render_task::run() {
 
 void render_task::upload()
 {
-	if (m_target->image)
+	if (Global.python_uploadmain && m_target->image)
 	{
 		glBindTexture(GL_TEXTURE_2D, m_target->shared_tex);
 		glTexImage2D(
