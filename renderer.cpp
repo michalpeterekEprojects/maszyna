@@ -3698,22 +3698,22 @@ void opengl_renderer::Update(double const Deltatime)
 		pick_node([](scene::basic_node *) {});
 
 	// dump last opengl error, if any
-	auto const glerror = ::glGetError();
-	if (glerror != GL_NO_ERROR)
-	{
-		std::string glerrorstring;
-		if (glerror == GL_INVALID_ENUM)
-			glerrorstring = "GL_INVALID_ENUM";
-		else if (glerror == GL_INVALID_VALUE)
-			glerrorstring = "GL_INVALID_VALUE";
-		else if (glerror == GL_INVALID_OPERATION)
-			glerrorstring = "GL_INVALID_OPERATION";
-		else if (glerror == GL_OUT_OF_MEMORY)
-			glerrorstring = "GL_OUT_OF_MEMORY";
-		else if (glerror == GL_INVALID_FRAMEBUFFER_OPERATION)
-			glerrorstring = "GL_INVALID_FRAMEBUFFER_OPERATION";
-		Global.LastGLError = std::to_string(glerror) + " (" + glerrorstring + ")";
-	}
+	//auto const glerror = ::glGetError();
+	//if (glerror != GL_NO_ERROR)
+	//{
+	//	std::string glerrorstring;
+	//	if (glerror == GL_INVALID_ENUM)
+	//		glerrorstring = "GL_INVALID_ENUM";
+	//	else if (glerror == GL_INVALID_VALUE)
+	//		glerrorstring = "GL_INVALID_VALUE";
+	//	else if (glerror == GL_INVALID_OPERATION)
+	//		glerrorstring = "GL_INVALID_OPERATION";
+	//	else if (glerror == GL_OUT_OF_MEMORY)
+	//		glerrorstring = "GL_OUT_OF_MEMORY";
+	//	else if (glerror == GL_INVALID_FRAMEBUFFER_OPERATION)
+	//		glerrorstring = "GL_INVALID_FRAMEBUFFER_OPERATION";
+	//	Global.LastGLError = std::to_string(glerror) + " (" + glerrorstring + ")";
+	//}
 }
 
 // debug performance string
