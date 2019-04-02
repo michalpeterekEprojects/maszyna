@@ -248,6 +248,7 @@ enum class user_command {
 	deletemodel,
 	dynamicmove,
 	consistteleport,
+	pullalarmchain,
 
 	quitsimulation,
 

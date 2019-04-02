@@ -6622,6 +6622,7 @@ bool TTrain::Update(double const Deltatime)
 			btLampkaMalfunction.Turn(mvControlled->dizel_heat.PA);
 			btLampkaMotorBlowers.Turn((mvControlled->MotorBlowers[end::front].is_active) && (mvControlled->MotorBlowers[end::rear].is_active));
             btLampkaCoolingFans.Turn( mvControlled->RventRot > 1.0 );
+            btLampkaTempomat.Turn( mvControlled->ScndCtrlPos > 0 );
 			// universal devices state indicators
 			for (auto idx = 0; idx < btUniversals.size(); ++idx)
 			{
@@ -6685,6 +6686,7 @@ bool TTrain::Update(double const Deltatime)
 			btLampkaMalfunction.Turn(false);
 			btLampkaMotorBlowers.Turn(false);
             btLampkaCoolingFans.Turn( false );
+            btLampkaTempomat.Turn( false );
 			// universal devices state indicators
 			for (auto &universal : btUniversals)
 			{
@@ -7306,6 +7308,18 @@ void TTrain::update_sounds(double const Deltatime)
 		}
 	}
 
+	if (mvOccupied->SecuritySystem.is_cabsignal_beeping()) {
+		if (!dsbCabsignalBuzzer.is_playing()) {
+			    dsbCabsignalBuzzer
+				    .pitch( dsbCabsignalBuzzer.m_frequencyoffset + dsbCabsignalBuzzer.m_frequencyfactor )
+				    .gain( dsbCabsignalBuzzer.m_amplitudeoffset + dsbCabsignalBuzzer.m_amplitudefactor )
+				    .play( sound_flags::looping );
+		}
+	}
+	else if (dsbCabsignalBuzzer.is_playing()) {
+		dsbCabsignalBuzzer.stop();
+	}
+
 	update_sounds_radio();
 
 	if (fTachoCount >= 3.f)
@@ -7464,12 +7478,17 @@ bool TTrain::LoadMMediaFile(std::string const &asFileName)
 			}
 			else if (token == "buzzer:")
 			{
-				// bzyczek shp:
+				// bzyczek czuwaka:
 				dsbBuzzer.deserialize(parser, sound_type::single);
 				dsbBuzzer.owner(DynamicObject);
 			}
-			else if (token == "radiostop:")
+			else if (token == "cabsignalbuzzer:")
 			{
+				// bzyczek shp:
+				dsbCabsignalBuzzer.deserialize( parser, sound_type::single );
+				dsbCabsignalBuzzer.owner( DynamicObject );
+			}
+            else if( token == "radiostop:" ) {
 				// radiostop
 				m_radiostop.deserialize(parser, sound_type::single);
 				m_radiostop.owner(DynamicObject);
@@ -7604,14 +7623,17 @@ bool TTrain::InitializeCab(int NewCabNo, std::string const &asFileName)
 	// clear python screens
 	m_screens.clear();
 	// reset sound positions and owner
-	auto const nullvector{glm::vec3()};
-	std::vector<sound_source *> sounds = {&dsbReverserKey, &dsbNastawnikJazdy, &dsbNastawnikBocz, &dsbSwitch,    &dsbPneumaticSwitch, &rsHiss,      &rsHissU,
-	                                      &rsHissE,        &rsHissX,           &rsHissT,          &rsSBHiss,     &rsSBHissU,          &rsFadeSound, &rsRunningNoise,
-	                                      &rsHuntingNoise, &dsbHasler,         &dsbBuzzer,        &dsbSlipAlarm, &m_radiosound,       &m_radiostop};
-	for (auto sound : sounds)
-	{
-		sound->offset(nullvector);
-		sound->owner(DynamicObject);
+    auto const nullvector { glm::vec3() };
+    std::vector<sound_source *> sounds = {
+        &dsbReverserKey, &dsbNastawnikJazdy, &dsbNastawnikBocz,
+        &dsbSwitch, &dsbPneumaticSwitch,
+        &rsHiss, &rsHissU, &rsHissE, &rsHissX, &rsHissT, &rsSBHiss, &rsSBHissU,
+        &rsFadeSound, &rsRunningNoise, &rsHuntingNoise,
+	    &dsbHasler, &dsbBuzzer, &dsbCabsignalBuzzer, &dsbSlipAlarm, &m_radiosound, &m_radiostop
+    };
+    for( auto sound : sounds ) {
+        sound->offset( nullvector );
+        sound->owner( DynamicObject );
 	}
 	// reset view angles
 	pMechViewAngle = {0.0, 0.0};
@@ -7899,6 +7921,9 @@ bool TTrain::InitializeCab(int NewCabNo, std::string const &asFileName)
 	{
 		dsbBuzzer.offset(btLampkaCzuwaka.model_offset());
 	}
+		if( dsbCabsignalBuzzer.offset() == nullvector ) {
+			dsbCabsignalBuzzer.offset( btLampkaCzuwaka.model_offset() );
+		}
 	// radio has two potential items which can provide the position
 	if (m_radiosound.offset() == nullvector)
 	{
@@ -8398,6 +8423,7 @@ void TTrain::clear_cab_controls()
 	btLampkaMalfunctionB.Clear();
 	btLampkaMotorBlowers.Clear();
     btLampkaCoolingFans.Clear();
+    btLampkaTempomat.Clear();
 
 	ggLeftLightButton.Clear();
 	ggRightLightButton.Clear();
@@ -8661,6 +8687,7 @@ bool TTrain::initialize_button(cParser &Parser, std::string const &Label, int co
         { "i-vent_trim:", btLampkaWentZaluzje },
         { "i-motorblowers:", btLampkaMotorBlowers },
         { "i-coolingfans:", btLampkaCoolingFans },
+        { "i-tempomat:", btLampkaTempomat },
         { "i-trainheating:", btLampkaOgrzewanieSkladu },
         { "i-security_aware:", btLampkaCzuwaka },
         { "i-security_cabsignal:", btLampkaSHP },
